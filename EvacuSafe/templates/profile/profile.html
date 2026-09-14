@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}EvacuSafe - Profile{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile/profile.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>PROFILE</h1>
+</div>
+
+<div class="profile-card">
+    <div class="profile-header">
+        <div class="avatar" id="avatar-preview"
+             {% if profile.avatar %}style="background-image:url('{{ profile.avatar.url }}');"{% endif %}>
+            <span class="avatar-fallback">{% if not profile.avatar %}{{ request.user.username|first|upper }}{% endif %}</span>
+        </div>
+        <div class="profile-identity">
+            <h2>{{ request.user.username }}</h2>
+            <p>{{ profile.role|default:"Responder" }} &middot; joined {{ profile.created_at|date:"M Y" }}</p>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <form method="POST" enctype="multipart/form-data" class="profile-form">
+        {% csrf_token %}
+
+        <h3 class="section-label">Profile Photo</h3>
+        <div class="form-row avatar-field">
+            {{ profile_form.avatar }}
+            <span class="field-hint">JPG or PNG. Square images look best.</span>
+            {% if profile_form.avatar.errors %}<div class="field-errors">{{ profile_form.avatar.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <h3 class="section-label">Personal Information</h3>
+        <div class="two-col">
+            <div class="form-row">
+                <label>First Name</label>
+                {{ user_form.first_name }}
+            </div>
+            <div class="form-row">
+                <label>Last Name</label>
+                {{ user_form.last_name }}
+            </div>
+        </div>
+        <div class="form-row">
+            <label>Email</label>
+            {{ user_form.email }}
+            {% if user_form.email.errors %}<div class="field-errors">{{ user_form.email.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <h3 class="section-label">Responder Details</h3>
+        <div class="two-col">
+            <div class="form-row">
+                <label>Role</label>
+                {{ profile_form.role }}
+            </div>
+            <div class="form-row">
+                <label>Phone</label>
+                {{ profile_form.phone }}
+            </div>
+        </div>
+        <div class="form-row">
+            <label>Bio</label>
+            {{ profile_form.bio }}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn save-btn">Save Changes</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/profile/profile.js' %}"></script>
+{% endblock %}

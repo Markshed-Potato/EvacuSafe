@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}EvacuSafe - Settings{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/user_settings/settings.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>SETTINGS</h1>
+</div>
+
+<div class="settings-grid">
+    <div class="settings-card">
+        <h3>Notification Preferences</h3>
+        <p class="hint">Control how EvacuSafe reaches you during an emergency.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="toggle-row">
+                <label>Email Notifications
+                    <span class="desc">Get alerts and summaries by email</span>
+                </label>
+                {{ settings_form.email_notifications }}
+            </div>
+            <div class="toggle-row">
+                <label>SMS Alerts
+                    <span class="desc">Critical evacuation alerts via SMS</span>
+                </label>
+                {{ settings_form.sms_alerts }}
+            </div>
+            <div class="toggle-row">
+                <label>Dark Mode
+                    <span class="desc">Preview a dark theme (client-side)</span>
+                </label>
+                {{ settings_form.dark_mode }}
+            </div>
+            <div class="select-row">
+                <label>Language</label>
+                {{ settings_form.language }}
+            </div>
+            <button type="submit" name="save_settings" class="btn save-btn">Save Settings</button>
+        </form>
+    </div>
+
+    <div class="settings-card">
+        <h3>Change Password</h3>
+        <p class="hint">Use a strong password you don't use elsewhere.</p>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-row">
+                <label>Current Password</label>
+                {{ password_form.old_password }}
+            </div>
+            <div class="form-row">
+                <label>New Password</label>
+                {{ password_form.new_password1 }}
+            </div>
+            <div class="form-row">
+                <label>Confirm New Password</label>
+                {{ password_form.new_password2 }}
+            </div>
+            {% if password_form.errors %}
+            <div class="field-errors">{{ password_form.errors|striptags }}</div>
+            {% endif %}
+            <button type="submit" name="change_password" class="btn save-btn danger">Update Password</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/user_settings/settings.js' %}"></script>
+{% endblock %}

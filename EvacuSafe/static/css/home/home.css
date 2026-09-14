@@ -1,0 +1,30 @@
+/* Home / Live Dashboard slice — page-header is shared in base.css */
+.status-badge { background: var(--success-bg); color: var(--success-text); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+
+.dashboard-body { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.map-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); min-height: 400px; display: flex; flex-direction: column; }
+.map-card h3 { margin-top: 0; color: var(--text); }
+.map-box { flex: 1; background: var(--input-bg); border-radius: 6px; display: flex; justify-content: center; align-items: center; color: var(--muted); font-weight: bold; border: 2px dashed var(--input-border); text-align: center; padding: 20px; }
+
+.stats-column { display: flex; flex-direction: column; gap: 20px; }
+.stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
+.stat-card h3 { font-size: 14px; color: var(--muted); margin: 0 0 10px 0; text-transform: uppercase; }
+.stat-card .value { font-size: 28px; font-weight: bold; color: var(--text); margin: 0; }
+.stat-card .value.green { color: #16a34a; }
+
+.centers-table-card { grid-column: 1 / -1; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: var(--shadow); }
+.centers-table-card h3 { color: var(--text); margin-top: 0; }
+.table-scroll { overflow-x: auto; }
+.centers-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.centers-table th, .centers-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--text); white-space: nowrap; }
+.centers-table th { color: var(--muted); text-transform: uppercase; font-size: 11px; }
+.badge { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.badge.active { background: var(--success-bg); color: var(--success-text); }
+.badge.standby { background: var(--warning-bg); color: var(--warning-text); }
+.badge.closed { background: var(--error-bg); color: var(--error-text); }
+.empty-state { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; }
+
+@media (max-width: 900px) {
+    .dashboard-body { grid-template-columns: 1fr; }
+}

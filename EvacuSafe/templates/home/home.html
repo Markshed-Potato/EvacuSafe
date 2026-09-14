@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}EvacuSafe - Dashboard{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home/home.css' %}">
+{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>HOME SCREEN / DISASTER MONITORING</h1>
+    <span class="status-badge" id="system-status-badge">● SYSTEM ACTIVE</span>
+</div>
+
+<div class="dashboard-body">
+    <div class="map-card">
+        <h3>Live Evacuation Center Map</h3>
+        <div class="map-box">
+            [ Interactive GIS Map Placeholder: Active Zones &amp; Centers ]
+        </div>
+    </div>
+
+    <div class="stats-column">
+        <div class="stat-card">
+            <h3>Active Centers</h3>
+            <p class="value">{{ active_count }} / {{ total_count }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Evacuees Sheltered</h3>
+            <p class="value">{{ total_occupants }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Capacity Used</h3>
+            <p class="value green">{{ total_occupants }} / {{ total_capacity }}</p>
+        </div>
+    </div>
+
+    <div class="centers-table-card">
+        <h3>Evacuation Centers (live from database)</h3>
+        {% if centers %}
+        <div class="table-scroll">
+        <table class="centers-table">
+            <thead>
+                <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th></tr>
+            </thead>
+            <tbody>
+                {% for c in centers %}
+                <tr>
+                    <td>{{ c.name }}</td>
+                    <td>{{ c.location|default:"—" }}</td>
+                    <td><span class="badge {{ c.status }}">{{ c.get_status_display }}</span></td>
+                    <td>{{ c.occupants }}</td>
+                    <td>{{ c.capacity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p class="empty-state">No evacuation centers yet. Add some in the Django admin at /admin/.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/home/home.js' %}"></script>
+{% endblock %}

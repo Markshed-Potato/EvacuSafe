@@ -1,0 +1,39 @@
+/* Settings slice — page-header is shared in base.css */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+.settings-card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 28px;
+    box-shadow: var(--shadow);
+}
+.settings-card h3 { margin-top: 0; font-size: 16px; color: var(--text); }
+.settings-card p.hint { color: var(--muted); font-size: 13px; margin-top: -6px; margin-bottom: 20px; }
+
+.toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); gap: 20px; }
+.toggle-row:last-of-type { border-bottom: none; }
+.toggle-row label { font-size: 14px; color: var(--text); font-weight: 600; }
+.toggle-row span.desc { display: block; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 2px; }
+.toggle-row input[type="checkbox"] {
+    width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0;
+}
+
+.select-row { margin-top: 16px; }
+.select-row label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+.select-row select {
+    width: 100%; padding: 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 14px;
+    background: var(--input-bg); color: var(--text);
+}
+
+.form-row input[type="password"] {
+    width: 100%; padding: 10px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 14px;
+    background: var(--input-bg); color: var(--text); margin-bottom: 14px;
+}
+.form-row label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+.field-errors { color: var(--danger); font-size: 12px; margin-top: -6px; margin-bottom: 12px; }
+
+.btn.save-btn { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+.btn.save-btn:hover { background: var(--accent-hover); }
+.btn.danger { background: var(--danger); }
+.btn.danger:hover { background: var(--danger-hover); }
+
+@media (max-width: 900px) {
+    .settings-grid { grid-template-columns: 1fr; }
+}
