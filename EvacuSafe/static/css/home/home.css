@@ -87,6 +87,26 @@
 .centers-table tbody tr:last-child td { border-bottom: 0; }
 .centers-table tbody tr:hover { background: var(--card-raised); }
 .centers-table td:first-child { font-weight: 650; }
+.inline-control {
+    width: 100%;
+    min-width: 90px;
+    min-height: 34px;
+    padding: 6px 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 11px;
+}
+.inline-control:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.1); }
+.occupant-control { width: 86px; min-width: 76px; }
+.inline-update-form { display: flex; align-items: center; gap: 7px; }
+.inline-save-btn { min-height: 33px; padding: 7px 10px; font-size: 11px; white-space: nowrap; }
+.inline-feedback { color: var(--success-text); font-size: 10px; white-space: nowrap; }
+.inline-feedback[hidden] { display: none; }
+.inline-update-form .inline-feedback:not([hidden]) { max-width: 150px; overflow-wrap: anywhere; }
 .coordinate-note { display: block; margin-top: 3px; color: var(--warning-text); font-size: 10px; }
 .badge { display: inline-flex; align-items: center; padding: 4px 9px; border: 1px solid transparent; border-radius: 99px; font-size: 10px; font-weight: 750; }
 .badge.active { background: var(--success-bg); color: var(--success-text); }

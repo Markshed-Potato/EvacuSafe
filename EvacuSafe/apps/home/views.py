@@ -1,10 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_POST
 
-from .forms import EvacuationCenterCreateForm
+from .forms import EvacuationCenterCreateForm, EvacuationCenterUpdateForm
 from .models import EvacuationCenter
 
 
@@ -23,6 +23,37 @@ def _serialize_center(center):
     }
 
 
+def _center_summary(centers):
+    totals = centers.aggregate(
+        total_capacity=Sum('capacity'),
+        total_occupants=Sum('occupants'),
+    )
+    return {
+        'active_count': centers.filter(status='active').count(),
+        'standby_count': centers.filter(status='standby').count(),
+        'closed_count': centers.filter(status='closed').count(),
+        'total_count': centers.count(),
+        'total_occupants': totals['total_occupants'] or 0,
+        'total_capacity': totals['total_capacity'] or 0,
+    }
+
+
+def _center_location_counts(centers):
+    return {
+        'unmapped_center_count': centers.filter(
+            latitude__isnull=True,
+        ).count() + centers.filter(
+            longitude__isnull=True,
+            latitude__isnull=False,
+        ).count(),
+        'approximate_center_count': centers.filter(
+            coordinates_are_approximate=True,
+            latitude__isnull=False,
+            longitude__isnull=False,
+        ).count(),
+    }
+
+
 @login_required
 def home_view(request):
     centers = EvacuationCenter.objects.all()
@@ -35,6 +66,7 @@ def home_view(request):
 
     context = {
         'centers': centers,
+        'status_choices': EvacuationCenter.STATUS_CHOICES,
         'active_count': active_count,
         'standby_count': centers.filter(status='standby').count(),
         'closed_count': centers.filter(status='closed').count(),
@@ -72,30 +104,27 @@ def manage_center_view(request):
 
     center = form.save()
     centers = EvacuationCenter.objects.all()
-    totals = centers.aggregate(
-        total_capacity=Sum('capacity'),
-        total_occupants=Sum('occupants'),
-    )
     return JsonResponse({
         'center': _serialize_center(center),
-        'summary': {
-            'active_count': centers.filter(status='active').count(),
-            'standby_count': centers.filter(status='standby').count(),
-            'closed_count': centers.filter(status='closed').count(),
-            'total_count': centers.count(),
-            'total_occupants': totals['total_occupants'] or 0,
-            'total_capacity': totals['total_capacity'] or 0,
-        },
-        'unmapped_center_count': centers.filter(
-            latitude__isnull=True,
-        ).count() + centers.filter(
-            longitude__isnull=True,
-            latitude__isnull=False,
-        ).count(),
-        'approximate_center_count': centers.filter(
-            coordinates_are_approximate=True,
-            latitude__isnull=False,
-            longitude__isnull=False,
-        ).count(),
+        'summary': _center_summary(centers),
+        **_center_location_counts(centers),
         'message': f'{center.name} was added.',
+    })
+
+
+@login_required
+@require_POST
+def update_center_view(request, center_id):
+    center = get_object_or_404(EvacuationCenter, pk=center_id)
+    form = EvacuationCenterUpdateForm(request.POST, instance=center)
+    if not form.is_valid():
+        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+    center = form.save()
+    centers = EvacuationCenter.objects.all()
+    return JsonResponse({
+        'center': _serialize_center(center),
+        'summary': _center_summary(centers),
+        **_center_location_counts(centers),
+        'message': f'{center.name} was updated.',
     })

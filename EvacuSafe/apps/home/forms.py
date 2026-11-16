@@ -35,3 +35,12 @@ class EvacuationCenterCreateForm(forms.ModelForm):
             if longitude is None:
                 self.add_error('longitude', message)
         return cleaned_data
+
+
+class EvacuationCenterUpdateForm(forms.ModelForm):
+    class Meta:
+        model = EvacuationCenter
+        fields = ['status', 'occupants']
+        widgets = {
+            'occupants': forms.NumberInput(attrs={'min': 0, 'step': 1}),
+        }

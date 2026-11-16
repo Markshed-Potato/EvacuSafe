@@ -76,6 +76,8 @@ class HomeDashboardMapTests(TestCase):
         self.assertContains(response, 'id="center-dialog"')
         self.assertContains(response, 'name="latitude"')
         self.assertContains(response, 'name="longitude"')
+        self.assertContains(response, 'class="inline-update-form"')
+        self.assertContains(response, 'name="occupants"')
         self.assertContains(response, 'data-status-filter="all"')
         self.assertContains(response, 'data-status-filter="active"')
         self.assertContains(response, 'data-status-filter="standby"')
@@ -170,3 +172,73 @@ class EvacuationCenterCreateTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('latitude', response.json()['errors'])
         self.assertEqual(EvacuationCenter.objects.count(), self.initial_center_count)
+
+
+class EvacuationCenterUpdateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='coordinator', password='test-password')
+        self.center = EvacuationCenter.objects.create(
+            name='Update Center',
+            location='Cebu City',
+            status='standby',
+            capacity=80,
+            occupants=20,
+            latitude=Decimal('10.315700'),
+            longitude=Decimal('123.885400'),
+        )
+        self.url = reverse('update_center', args=[self.center.pk])
+
+    def test_anonymous_user_cannot_update_center(self):
+        response = self.client.post(self.url, {'status': 'active', 'occupants': 30})
+
+        self.assertEqual(response.status_code, 302)
+        self.center.refresh_from_db()
+        self.assertEqual(self.center.status, 'standby')
+        self.assertEqual(self.center.occupants, 20)
+
+    def test_authenticated_user_updates_center_and_receives_new_summary(self):
+        self.client.force_login(self.user)
+        old_active_count = EvacuationCenter.objects.filter(status='active').count()
+        old_standby_count = EvacuationCenter.objects.filter(status='standby').count()
+        old_closed_count = EvacuationCenter.objects.filter(status='closed').count()
+        old_occupants = sum(EvacuationCenter.objects.values_list('occupants', flat=True))
+        old_capacity = sum(EvacuationCenter.objects.values_list('capacity', flat=True))
+
+        response = self.client.post(self.url, {'status': 'active', 'occupants': 35})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['center']['status_key'], 'active')
+        self.assertEqual(response.json()['center']['occupants'], 35)
+        self.assertEqual(response.json()['summary'], {
+            'active_count': old_active_count + 1,
+            'standby_count': old_standby_count - 1,
+            'closed_count': old_closed_count,
+            'total_count': EvacuationCenter.objects.count(),
+            'total_occupants': old_occupants + 15,
+            'total_capacity': old_capacity,
+        })
+        self.center.refresh_from_db()
+        self.assertEqual(self.center.status, 'active')
+        self.assertEqual(self.center.occupants, 35)
+
+    def test_invalid_status_and_occupant_count_are_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.url, {'status': 'unknown', 'occupants': -1})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('status', response.json()['errors'])
+        self.assertIn('occupants', response.json()['errors'])
+        self.center.refresh_from_db()
+        self.assertEqual(self.center.status, 'standby')
+        self.assertEqual(self.center.occupants, 20)
+
+    def test_missing_center_returns_not_found(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse('update_center', args=[999999]), {
+            'status': 'active',
+            'occupants': 0,
+        })
+
+        self.assertEqual(response.status_code, 404)
