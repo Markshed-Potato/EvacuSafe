@@ -10,7 +10,7 @@ class UserSettings(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='settings')
     email_notifications = models.BooleanField(default=True)
     sms_alerts = models.BooleanField(default=False)
-    dark_mode = models.BooleanField(default=False)
+    dark_mode = models.BooleanField(default=True)
     language = models.CharField(max_length=5, choices=LANGUAGE_CHOICES, default='en')
     updated_at = models.DateTimeField(auto_now=True)
 

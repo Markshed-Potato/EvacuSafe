@@ -9,10 +9,11 @@
 <div class="auth-container">
     <div class="left-panel">
         <div class="form-box">
+            <div class="auth-kicker">EvacuSafe response network</div>
             <h1>Welcome Back</h1>
-            <p class="subtitle">Sign in to access EvacuSafe network</p>
+            <p class="subtitle">Sign in to view live evacuation operations and responder updates.</p>
 
-            <form action="{% url 'login' %}" method="POST">
+            <form action="{% url 'login' %}" method="POST" class="auth-form login-form">
                 {% csrf_token %}
                 <div class="input-group">
                     <label for="id_username">Username / ID</label>
@@ -27,11 +28,11 @@
                 {% if form.non_field_errors %}
                 <div class="field-errors">{{ form.non_field_errors|striptags }}</div>
                 {% endif %}
-                <button type="submit" class="btn">Secure Login</button>
+                <button type="submit" class="btn">Sign in <span aria-hidden="true">→</span></button>
             </form>
 
             <div class="links">
-                <p>New evacuation team? <a href="{% url 'register' %}">Register platform</a></p>
+                <p>New to the response network? <a href="{% url 'register' %}">Create an account</a></p>
             </div>
         </div>
     </div>
@@ -39,7 +40,12 @@
     <div class="right-panel">
         <img src="{% static 'images/login/logo.svg' %}" alt="EvacuSafe logo" class="brand-logo">
         <h2>EvacuSafe</h2>
-        <p>Disaster-Adaptive Evacuation Center Management &amp; Real-Time Resource Tracking System.</p>
+        <p>One clear view of evacuation centers, capacity, and responder activity when it matters most.</p>
+        <div class="auth-points">
+            <span>Live center availability</span>
+            <span>Capacity at a glance</span>
+            <span>Responder-ready updates</span>
+        </div>
     </div>
 </div>
 {% endblock %}

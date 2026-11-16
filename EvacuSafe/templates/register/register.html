@@ -9,10 +9,11 @@
 <div class="auth-container">
     <div class="left-panel">
         <div class="form-box">
-            <h1>Create Account</h1>
-            <p class="subtitle">Join the EvacuSafe emergency network</p>
+            <div class="auth-kicker">EvacuSafe response network</div>
+            <h1>Create your account</h1>
+            <p class="subtitle">Set up responder access to evacuation center updates.</p>
 
-            <form action="{% url 'register' %}" method="POST">
+            <form action="{% url 'register' %}" method="POST" class="auth-form register-form">
                 {% csrf_token %}
                 <div class="input-group">
                     <label for="id_username">Username</label>
@@ -34,11 +35,11 @@
                     {{ form.password2 }}
                     {% if form.password2.errors %}<div class="field-errors">{{ form.password2.errors|striptags }}</div>{% endif %}
                 </div>
-                <button type="submit" class="btn dark">Register Platform</button>
+                <button type="submit" class="btn">Create account <span aria-hidden="true">→</span></button>
             </form>
 
             <div class="links">
-                <p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>
+                <p>Already registered? <a href="{% url 'login' %}">Sign in</a></p>
             </div>
         </div>
     </div>
@@ -46,7 +47,12 @@
     <div class="right-panel">
         <img src="{% static 'images/register/logo.svg' %}" alt="EvacuSafe logo" class="brand-logo">
         <h2>EvacuSafe</h2>
-        <p>Empowering local response teams with rapid registration and real-time situational awareness.</p>
+        <p>A calm, coordinated workspace for local response teams and community evacuation support.</p>
+        <div class="auth-points">
+            <span>Simple responder onboarding</span>
+            <span>Shared center information</span>
+            <span>Built for clear coordination</span>
+        </div>
     </div>
 </div>
 {% endblock %}
