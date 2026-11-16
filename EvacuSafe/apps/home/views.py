@@ -28,6 +28,7 @@ def home_view(request):
                 'status_key': center.status,
                 'occupants': center.occupants,
                 'capacity': center.capacity,
+                'coordinates_are_approximate': center.coordinates_are_approximate,
                 'latitude': float(center.latitude),
                 'longitude': float(center.longitude),
             }
@@ -38,6 +39,13 @@ def home_view(request):
             1
             for center in centers
             if center.latitude is None or center.longitude is None
+        ),
+        'approximate_center_count': sum(
+            1
+            for center in centers
+            if center.latitude is not None
+            and center.longitude is not None
+            and center.coordinates_are_approximate
         ),
     }
     return render(request, 'home/home.html', context)

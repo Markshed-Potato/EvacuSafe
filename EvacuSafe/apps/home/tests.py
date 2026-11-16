@@ -43,6 +43,13 @@ class HomeDashboardMapTests(TestCase):
             occupants=12,
             capacity=30,
         )
+        EvacuationCenter.objects.create(
+            name='Approximate Center',
+            location='Approximate area only',
+            latitude=Decimal('10.300000'),
+            longitude=Decimal('123.900000'),
+            coordinates_are_approximate=True,
+        )
         EvacuationCenter.objects.create(name='Center Awaiting Coordinates')
         self.client.force_login(user)
 
@@ -56,8 +63,15 @@ class HomeDashboardMapTests(TestCase):
         self.assertEqual(mapped['status'], 'Active')
         self.assertEqual(mapped['occupants'], 12)
         self.assertEqual(mapped['capacity'], 30)
+        approximate = next(
+            center for center in map_centers if center['name'] == 'Approximate Center'
+        )
+        self.assertTrue(approximate['coordinates_are_approximate'])
+        self.assertEqual(response.context['approximate_center_count'], 4)
         self.assertGreater(response.context['unmapped_center_count'], 0)
         self.assertContains(response, 'evacuation-map')
+        self.assertContains(response, 'Approximate map location')
+        self.assertContains(response, 'data-approximate-count="4"')
         self.assertContains(
             response,
             'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',

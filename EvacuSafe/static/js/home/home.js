@@ -67,6 +67,12 @@ document.addEventListener('DOMContentLoaded', function () {
         statusElement.textContent = markers.length + ' evacuation center' + (markers.length === 1 ? '' : 's') +
             ' on the map. Marker color shows status; size reflects capacity use.';
     }
+    const approximateCount = Number(mapElement.dataset.approximateCount);
+    if (approximateCount > 0) {
+        statusElement.textContent += ' ' + approximateCount +
+            ' marker' + (approximateCount === 1 ? ' is' : 's are') +
+            ' approximate area locations; verify before operational use.';
+    }
 
     function statusColor(status) {
         if (status === 'active') return '#16a34a';
@@ -86,6 +92,12 @@ document.addEventListener('DOMContentLoaded', function () {
             const location = document.createElement('p');
             location.textContent = center.location;
             popup.appendChild(location);
+        }
+
+        if (center.coordinates_are_approximate) {
+            const approximate = document.createElement('p');
+            approximate.textContent = 'Approximate area marker — verify exact facility location before operational use.';
+            popup.appendChild(approximate);
         }
 
         const status = document.createElement('p');

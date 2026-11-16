@@ -16,7 +16,8 @@
     <div class="map-card">
         <h3>Live Evacuation Center Map</h3>
         <div id="evacuation-map" class="map-box"
-             data-unmapped-count="{{ unmapped_center_count }}" role="application"
+             data-unmapped-count="{{ unmapped_center_count }}"
+             data-approximate-count="{{ approximate_center_count }}" role="application"
              data-tile-url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
              data-tile-attribution="&copy; OpenStreetMap contributors &copy; CARTO"
              aria-label="Interactive map of evacuation centers"></div>
@@ -56,7 +57,12 @@
                 {% for c in centers %}
                 <tr>
                     <td>{{ c.name }}</td>
-                    <td>{{ c.location|default:"—" }}</td>
+                    <td>
+                        {{ c.location|default:"—" }}
+                        {% if c.coordinates_are_approximate %}
+                        <small class="coordinate-note">Approximate map location</small>
+                        {% endif %}
+                    </td>
                     <td><span class="badge {{ c.status }}">{{ c.get_status_display }}</span></td>
                     <td>{{ c.occupants }}</td>
                     <td>{{ c.capacity }}</td>

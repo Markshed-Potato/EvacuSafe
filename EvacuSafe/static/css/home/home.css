@@ -38,6 +38,7 @@
 .badge.standby { background: var(--warning-bg); color: var(--warning-text); }
 .badge.closed { background: var(--error-bg); color: var(--error-text); }
 .empty-state { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; }
+.coordinate-note { display: block; color: var(--warning-text); font-size: 11px; }
 
 @media (max-width: 900px) {
     .dashboard-body { grid-template-columns: 1fr; }
