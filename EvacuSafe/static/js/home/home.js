@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function applyFilters() {
         const query = searchInput.value.trim().toLocaleLowerCase();
         let visibleCount = 0;
+        let visibleMarkerCount = 0;
 
         Array.from(tableBody.rows).forEach(function (row) {
             const matchesStatus = selectedStatus === 'all' || row.dataset.status === selectedStatus;
@@ -65,13 +66,19 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!marker) return;
             if (visible && !map.hasLayer(marker)) marker.addTo(map);
             if (!visible && map.hasLayer(marker)) map.removeLayer(marker);
+            if (visible && map.hasLayer(marker)) visibleMarkerCount += 1;
         });
 
+        filterButtons.forEach(function (button) {
+            const active = button.dataset.statusFilter === selectedStatus;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', String(active));
+        });
         emptyState.hidden = visibleCount > 0;
         statusElement.textContent = visibleCount + ' of ' + centers.length +
             ' evacuation center' + (centers.length === 1 ? '' : 's') + ' shown. ' +
-            markerById.size + ' center' + (markerById.size === 1 ? ' marker' : ' markers') +
-            ' available on the map.';
+            visibleMarkerCount + ' center' + (visibleMarkerCount === 1 ? ' marker' : ' markers') +
+            ' shown on the map.';
         if (Number(mapElement.dataset.unmappedCount) > 0) {
             statusElement.textContent += ' Some centers have no coordinates.';
         }
@@ -86,11 +93,6 @@ document.addEventListener('DOMContentLoaded', function () {
     filterButtons.forEach(function (button) {
         button.addEventListener('click', function () {
             selectedStatus = button.dataset.statusFilter;
-            filterButtons.forEach(function (item) {
-                const active = item === button;
-                item.classList.toggle('active', active);
-                item.setAttribute('aria-pressed', String(active));
-            });
             applyFilters();
         });
     });

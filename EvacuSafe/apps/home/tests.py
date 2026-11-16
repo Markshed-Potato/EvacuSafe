@@ -82,6 +82,8 @@ class HomeDashboardMapTests(TestCase):
         self.assertContains(response, 'data-status-filter="active"')
         self.assertContains(response, 'data-status-filter="standby"')
         self.assertContains(response, 'data-status-filter="closed"')
+        self.assertContains(response, 'Filter map and center list')
+        self.assertEqual(response.content.count(b'data-status-filter='), 8)
         self.assertContains(response, 'data-center-id="')
         self.assertContains(response, 'Approximate map location')
         self.assertContains(response, 'data-approximate-count="4"')
