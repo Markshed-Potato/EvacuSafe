@@ -93,7 +93,51 @@
 .badge.standby { background: var(--warning-bg); color: var(--warning-text); }
 .badge.closed { background: var(--error-bg); color: var(--error-text); }
 .status-badge { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 99px; background: var(--success-bg); color: var(--success-text); font-size: 11px; font-weight: 750; white-space: nowrap; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.add-center-btn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.add-center-btn span { font-size: 18px; line-height: 0.8; }
 .empty-state { padding: 28px 16px; border: 1px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+
+.center-dialog {
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(90vh, 760px);
+    padding: 0;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--card-bg);
+    color: var(--text);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+.center-dialog::backdrop { background: rgba(2, 6, 23, 0.76); backdrop-filter: blur(4px); }
+.center-dialog form { padding: 25px; }
+.dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dialog-heading h2 { margin: 0; color: var(--text); font-size: 20px; letter-spacing: -0.03em; }
+.dialog-kicker { margin: 0 0 5px; color: var(--accent); font-size: 10px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; }
+.dialog-description { margin: 8px 0 20px; color: var(--muted); font-size: 12px; }
+.dialog-close { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-raised); color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; }
+.dialog-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.dialog-field { display: grid; gap: 7px; min-width: 0; }
+.dialog-field.full { grid-column: 1 / -1; }
+.dialog-field label { color: var(--muted); font-size: 11px; font-weight: 650; }
+.dialog-field label span { font-weight: 450; }
+.dialog-field input, .dialog-field select {
+    width: 100%;
+    min-height: 41px;
+    padding: 9px 11px;
+    border: 1px solid var(--input-border);
+    border-radius: 9px;
+    outline: none;
+    background: var(--input-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+.dialog-field input:focus, .dialog-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12); }
+.dialog-feedback { margin: 15px 0 0; padding: 10px 12px; border-radius: 9px; background: var(--error-bg); color: var(--error-text); font-size: 12px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 21px; }
+.dialog-actions button:disabled { cursor: wait; opacity: 0.65; }
+.secondary-btn { border: 1px solid var(--border); background: var(--card-raised); color: var(--text); }
 
 @media (max-width: 1000px) {
     .dashboard-body { grid-template-columns: minmax(0, 1.4fr) minmax(200px, 0.8fr); gap: 14px; }
@@ -107,6 +151,8 @@
     .map-box { min-height: 300px; }
 }
 @media (max-width: 520px) {
+    .header-actions { align-items: flex-end; flex-direction: column-reverse; gap: 7px; }
+    .center-dialog form { padding: 20px; }
     .stats-column { grid-template-columns: 1fr; }
     .stat-card { min-height: 82px; }
     .centers-table th, .centers-table td { padding: 10px 9px; }
