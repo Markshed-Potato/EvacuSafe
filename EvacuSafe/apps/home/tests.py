@@ -1,7 +1,9 @@
 from decimal import Decimal
 
-from django.test import TestCase
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.test import TestCase
+from django.urls import reverse
 from .models import EvacuationCenter
 
 
@@ -27,3 +29,33 @@ class EvacuationCenterCoordinateTests(TestCase):
         center = EvacuationCenter(name='Invalid Center', longitude=-181)
         with self.assertRaises(ValidationError):
             center.full_clean()
+
+
+class HomeDashboardMapTests(TestCase):
+    def test_dashboard_renders_coordinates_and_unmapped_center_count(self):
+        user = User.objects.create_user(username='responder', password='test-password')
+        EvacuationCenter.objects.create(
+            name='Mapped Center',
+            location='Cebu City',
+            latitude=Decimal('10.315700'),
+            longitude=Decimal('123.885400'),
+            status='active',
+            occupants=12,
+            capacity=30,
+        )
+        EvacuationCenter.objects.create(name='Center Awaiting Coordinates')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        map_centers = response.context['map_centers']
+        mapped = next(center for center in map_centers if center['name'] == 'Mapped Center')
+        self.assertEqual(mapped['latitude'], 10.3157)
+        self.assertEqual(mapped['longitude'], 123.8854)
+        self.assertEqual(mapped['status'], 'Active')
+        self.assertEqual(mapped['occupants'], 12)
+        self.assertEqual(mapped['capacity'], 30)
+        self.assertGreater(response.context['unmapped_center_count'], 0)
+        self.assertContains(response, 'evacuation-map')
+        self.assertContains(response, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')

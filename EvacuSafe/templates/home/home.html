@@ -2,6 +2,8 @@
 {% load static %}
 {% block title %}EvacuSafe - Dashboard{% endblock %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="{% static 'css/home/home.css' %}">
 {% endblock %}
 {% block content %}
@@ -13,9 +15,16 @@
 <div class="dashboard-body">
     <div class="map-card">
         <h3>Live Evacuation Center Map</h3>
-        <div class="map-box">
-            [ Interactive GIS Map Placeholder: Active Zones &amp; Centers ]
+        <div id="evacuation-map" class="map-box"
+             data-unmapped-count="{{ unmapped_center_count }}" role="application"
+             aria-label="Interactive map of evacuation centers"></div>
+        <p id="map-status" class="map-status" role="status" aria-live="polite"></p>
+        <div class="map-legend" aria-label="Center status legend">
+            <span><i class="legend-dot active"></i> Active</span>
+            <span><i class="legend-dot standby"></i> Standby</span>
+            <span><i class="legend-dot closed"></i> Closed</span>
         </div>
+        {{ map_centers|json_script:"evacuation-centers-data" }}
     </div>
 
     <div class="stats-column">
@@ -61,5 +70,7 @@
 </div>
 {% endblock %}
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="{% static 'js/home/home.js' %}"></script>
 {% endblock %}
