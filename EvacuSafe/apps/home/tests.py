@@ -74,8 +74,8 @@ class HomeDashboardMapTests(TestCase):
         self.assertContains(response, 'data-approximate-count="4"')
         self.assertContains(
             response,
-            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
         )
         self.assertContains(response, 'OpenStreetMap contributors')
-        self.assertContains(response, 'CARTO')
+        self.assertContains(response, 'Sources: Esri')
         self.assertContains(response, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
