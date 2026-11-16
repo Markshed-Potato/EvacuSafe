@@ -42,6 +42,44 @@
 .stat-card:nth-child(3) { border-left: 3px solid #818cf8; }
 
 .centers-table-card { grid-column: 1 / -1; min-width: 0; padding: 21px; }
+.centers-table-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.centers-table-heading h3 { margin: 0 0 4px; }
+.centers-table-heading p { margin: 0; color: var(--muted); font-size: 12px; }
+.center-search { position: relative; display: flex; width: min(100%, 340px); align-items: center; }
+.center-search input {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 13px 9px 38px;
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    background: var(--input-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 12px;
+}
+.center-search input::placeholder { color: var(--muted); }
+.center-search input:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12); }
+.search-icon { position: absolute; left: 13px; z-index: 1; color: var(--muted); font-size: 20px; line-height: 1; }
+.filter-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.filter-pill {
+    display: inline-flex;
+    min-height: 34px;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 11px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    background: var(--card-raised);
+    color: var(--muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 650;
+}
+.filter-pill span { color: var(--muted); font-size: 10px; }
+.filter-pill:hover, .filter-pill.active { border-color: rgba(52, 211, 153, 0.4); background: var(--success-bg); color: var(--success-text); }
+.filter-pill.active span { color: var(--success-text); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; clip-path: inset(50%); }
 .table-scroll { overflow-x: auto; }
 .centers-table { width: 100%; border-collapse: collapse; }
 .centers-table th, .centers-table td { padding: 13px 12px; border-bottom: 1px solid var(--border); color: var(--text); font-size: 13px; text-align: left; }
@@ -72,4 +110,6 @@
     .stats-column { grid-template-columns: 1fr; }
     .stat-card { min-height: 82px; }
     .centers-table th, .centers-table td { padding: 10px 9px; }
+    .centers-table-heading { flex-direction: column; }
+    .center-search { width: 100%; }
 }

@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum
 from django.shortcuts import render
+
 from .models import EvacuationCenter
 
 
@@ -17,11 +18,14 @@ def home_view(request):
     context = {
         'centers': centers,
         'active_count': active_count,
+        'standby_count': centers.filter(status='standby').count(),
+        'closed_count': centers.filter(status='closed').count(),
         'total_count': total_count,
         'total_occupants': totals['total_occupants'] or 0,
         'total_capacity': totals['total_capacity'] or 0,
         'map_centers': [
             {
+                'id': center.pk,
                 'name': center.name,
                 'location': center.location,
                 'status': center.get_status_display(),

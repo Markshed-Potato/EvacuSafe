@@ -58,6 +58,7 @@ class HomeDashboardMapTests(TestCase):
         self.assertEqual(response.status_code, 200)
         map_centers = response.context['map_centers']
         mapped = next(center for center in map_centers if center['name'] == 'Mapped Center')
+        self.assertIn('id', mapped)
         self.assertEqual(mapped['latitude'], 10.3157)
         self.assertEqual(mapped['longitude'], 123.8854)
         self.assertEqual(mapped['status'], 'Active')
@@ -70,6 +71,12 @@ class HomeDashboardMapTests(TestCase):
         self.assertEqual(response.context['approximate_center_count'], 4)
         self.assertGreater(response.context['unmapped_center_count'], 0)
         self.assertContains(response, 'evacuation-map')
+        self.assertContains(response, 'id="center-search"')
+        self.assertContains(response, 'data-status-filter="all"')
+        self.assertContains(response, 'data-status-filter="active"')
+        self.assertContains(response, 'data-status-filter="standby"')
+        self.assertContains(response, 'data-status-filter="closed"')
+        self.assertContains(response, 'data-center-id="')
         self.assertContains(response, 'Approximate map location')
         self.assertContains(response, 'data-approximate-count="4"')
         self.assertContains(

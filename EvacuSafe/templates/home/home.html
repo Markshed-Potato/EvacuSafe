@@ -36,29 +36,44 @@
     <div class="stats-column">
         <div class="stat-card">
             <h3>Active Centers</h3>
-            <p class="value">{{ active_count }} / {{ total_count }}</p>
+            <p class="value" id="active-center-count">{{ active_count }} / {{ total_count }}</p>
         </div>
         <div class="stat-card">
             <h3>Evacuees Sheltered</h3>
-            <p class="value">{{ total_occupants }}</p>
+            <p class="value" id="total-occupants">{{ total_occupants }}</p>
         </div>
         <div class="stat-card">
             <h3>Capacity Used</h3>
-            <p class="value green">{{ total_occupants }} / {{ total_capacity }}</p>
+            <p class="value green" id="capacity-used">{{ total_occupants }} / {{ total_capacity }}</p>
         </div>
     </div>
 
     <div class="centers-table-card">
-        <h3>Evacuation Centers (live from database)</h3>
-        {% if centers %}
+        <div class="centers-table-heading">
+            <div>
+                <h3>Evacuation centers</h3>
+                <p>Find centers by name or location and filter by availability.</p>
+            </div>
+            <label class="center-search">
+                <span class="visually-hidden">Search by center name or location</span>
+                <span aria-hidden="true" class="search-icon">⌕</span>
+                <input type="search" id="center-search" placeholder="Search centers or barangay…" autocomplete="off">
+            </label>
+        </div>
+        <div class="filter-pills" role="group" aria-label="Filter centers by status">
+            <button type="button" class="filter-pill active" data-status-filter="all" aria-pressed="true">All <span>{{ total_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="active" aria-pressed="false">Active <span>{{ active_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="standby" aria-pressed="false">Standby <span>{{ standby_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="closed" aria-pressed="false">Closed <span>{{ closed_count }}</span></button>
+        </div>
         <div class="table-scroll">
-        <table class="centers-table">
-            <thead>
-                <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th></tr>
-            </thead>
-            <tbody>
+            <table class="centers-table">
+                <thead>
+                    <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th></tr>
+                </thead>
+                <tbody id="centers-table-body">
                 {% for c in centers %}
-                <tr>
+                <tr data-center-id="{{ c.pk }}" data-status="{{ c.status }}" data-name="{{ c.name|lower }}" data-location="{{ c.location|lower }}">
                     <td>{{ c.name }}</td>
                     <td>
                         {{ c.location|default:"—" }}
@@ -71,12 +86,10 @@
                     <td>{{ c.capacity }}</td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
         </div>
-        {% else %}
-        <p class="empty-state">No evacuation centers yet. Add some in the Django admin at /admin/.</p>
-        {% endif %}
+        <p class="empty-state" id="center-empty-state" hidden>No centers match these filters. Try another search or status.</p>
     </div>
 </div>
 {% endblock %}

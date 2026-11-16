@@ -2,8 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const badge = document.getElementById('system-status-badge');
     if (badge) {
         function tick() {
-            const now = new Date();
-            badge.title = 'Last checked: ' + now.toLocaleTimeString();
+            badge.title = 'Last checked: ' + new Date().toLocaleTimeString();
         }
         tick();
         setInterval(tick, 30000);
@@ -14,7 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const statusElement = document.getElementById('map-status');
     const dataElement = document.getElementById('evacuation-centers-data');
-    if (!dataElement || !statusElement) return;
+    const searchInput = document.getElementById('center-search');
+    const tableBody = document.getElementById('centers-table-body');
+    const emptyState = document.getElementById('center-empty-state');
+    const filterButtons = Array.from(document.querySelectorAll('[data-status-filter]'));
+    if (!dataElement || !statusElement || !searchInput || !tableBody || !emptyState) return;
 
     if (!window.L) {
         statusElement.textContent = 'The map library could not be loaded. Check your internet connection and reload the page.';
@@ -22,61 +25,93 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const centers = JSON.parse(dataElement.textContent);
-    const defaultCenter = [10.3157, 123.8854];
-    const map = L.map(mapElement).setView(defaultCenter, 12);
-
+    const map = L.map(mapElement).setView([10.3157, 123.8854], 12);
     L.tileLayer(mapElement.dataset.tileUrl, {
         attribution: mapElement.dataset.tileAttribution,
         maxZoom: 19
     }).addTo(map);
 
-    const markers = [];
+    const markerById = new Map();
     centers.forEach(function (center) {
-        const utilization = center.capacity > 0
-            ? Math.min(center.occupants / center.capacity, 1)
-            : 0;
+        if (center.latitude === null || center.longitude === null) return;
         const marker = L.circleMarker([center.latitude, center.longitude], {
-            radius: 7 + Math.round(utilization * 5),
-            color: '#fff',
+            radius: markerRadius(center),
+            color: '#f8fafc',
             weight: 2,
             fillColor: statusColor(center.status_key),
             fillOpacity: 0.95,
             className: 'center-marker ' + center.status_key
         }).addTo(map);
-
         marker.bindPopup(createCenterPopup(center));
-        markers.push(marker);
+        markerById.set(String(center.id), marker);
     });
 
-    if (markers.length > 1) {
-        map.fitBounds(L.featureGroup(markers).getBounds().pad(0.2));
-    } else if (markers.length === 1) {
-        map.setView(markers[0].getLatLng(), 14);
+    const mappedMarkers = Array.from(markerById.values());
+    if (mappedMarkers.length > 1) {
+        map.fitBounds(L.featureGroup(mappedMarkers).getBounds().pad(0.2));
+    } else if (mappedMarkers.length === 1) {
+        map.setView(mappedMarkers[0].getLatLng(), 14);
     }
 
-    const unmappedCount = Number(mapElement.dataset.unmappedCount);
-    if (markers.length === 0) {
-        statusElement.textContent = unmappedCount
-            ? 'No centers have coordinates yet. Add latitude and longitude in the evacuation center admin to show map markers.'
-            : 'No evacuation centers are available to display.';
-    } else if (unmappedCount > 0) {
-        statusElement.textContent = markers.length + ' mapped center' + (markers.length === 1 ? '' : 's') +
-            '; ' + unmappedCount + ' center' + (unmappedCount === 1 ? ' has' : 's have') +
-            ' no coordinates and will not appear on the map. Marker color shows status; size reflects capacity use.';
-    } else {
-        statusElement.textContent = markers.length + ' evacuation center' + (markers.length === 1 ? '' : 's') +
-            ' on the map. Marker color shows status; size reflects capacity use.';
+    let selectedStatus = 'all';
+    function applyFilters() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        let visibleCount = 0;
+
+        Array.from(tableBody.rows).forEach(function (row) {
+            const matchesStatus = selectedStatus === 'all' || row.dataset.status === selectedStatus;
+            const matchesQuery = !query ||
+                row.dataset.name.includes(query) ||
+                row.dataset.location.includes(query);
+            const visible = matchesStatus && matchesQuery;
+            row.hidden = !visible;
+            if (visible) visibleCount += 1;
+
+            const marker = markerById.get(row.dataset.centerId);
+            if (!marker) return;
+            if (visible && !map.hasLayer(marker)) marker.addTo(map);
+            if (!visible && map.hasLayer(marker)) map.removeLayer(marker);
+        });
+
+        emptyState.hidden = visibleCount > 0;
+        statusElement.textContent = visibleCount + ' of ' + centers.length +
+            ' evacuation center' + (centers.length === 1 ? '' : 's') + ' shown. ' +
+            markerById.size + ' center' + (markerById.size === 1 ? ' marker' : ' markers') +
+            ' available on the map.';
+        if (Number(mapElement.dataset.unmappedCount) > 0) {
+            statusElement.textContent += ' Some centers have no coordinates.';
+        }
+        if (Number(mapElement.dataset.approximateCount) > 0) {
+            statusElement.textContent += ' ' + mapElement.dataset.approximateCount +
+                ' marker' + (Number(mapElement.dataset.approximateCount) === 1 ? ' is' : 's are') +
+                ' approximate area locations.';
+        }
     }
-    const approximateCount = Number(mapElement.dataset.approximateCount);
-    if (approximateCount > 0) {
-        statusElement.textContent += ' ' + approximateCount +
-            ' marker' + (approximateCount === 1 ? ' is' : 's are') +
-            ' approximate area locations; verify before operational use.';
+
+    searchInput.addEventListener('input', applyFilters);
+    filterButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+            selectedStatus = button.dataset.statusFilter;
+            filterButtons.forEach(function (item) {
+                const active = item === button;
+                item.classList.toggle('active', active);
+                item.setAttribute('aria-pressed', String(active));
+            });
+            applyFilters();
+        });
+    });
+    applyFilters();
+
+    function markerRadius(center) {
+        const utilization = center.capacity > 0
+            ? Math.min(center.occupants / center.capacity, 1)
+            : 0;
+        return 7 + Math.round(utilization * 5);
     }
 
     function statusColor(status) {
-        if (status === 'active') return '#16a34a';
-        if (status === 'standby') return '#d97706';
+        if (status === 'active') return '#10b981';
+        if (status === 'standby') return '#f59e0b';
         return '#64748b';
     }
 
@@ -111,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
         capacity.textContent = 'Occupancy: ' + center.occupants + ' / ' + center.capacity +
             ' (' + utilization + '% capacity)';
         popup.appendChild(capacity);
-
         return popup;
     }
 });
