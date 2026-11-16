@@ -21,6 +21,15 @@
 <div class="dashboard-body">
     <div class="map-card">
         <h3>Live Evacuation Center Map</h3>
+        <div class="map-filter-bar">
+            <span>Filter map and center list</span>
+            <div class="filter-pills map-filter-pills" role="group" aria-label="Filter map and center list by status">
+                <button type="button" class="filter-pill active" data-status-filter="all" aria-pressed="true">All <span>{{ total_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="active" aria-pressed="false">Active <span>{{ active_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="standby" aria-pressed="false">Standby <span>{{ standby_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="closed" aria-pressed="false">Closed <span>{{ closed_count }}</span></button>
+            </div>
+        </div>
         <div id="evacuation-map" class="map-box"
              data-unmapped-count="{{ unmapped_center_count }}"
              data-approximate-count="{{ approximate_center_count }}" role="application"
