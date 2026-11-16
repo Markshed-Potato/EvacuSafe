@@ -58,4 +58,10 @@ class HomeDashboardMapTests(TestCase):
         self.assertEqual(mapped['capacity'], 30)
         self.assertGreater(response.context['unmapped_center_count'], 0)
         self.assertContains(response, 'evacuation-map')
+        self.assertContains(
+            response,
+            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        )
+        self.assertContains(response, 'OpenStreetMap contributors')
+        self.assertContains(response, 'CARTO')
         self.assertContains(response, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')

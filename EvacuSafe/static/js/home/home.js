@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const defaultCenter = [10.3157, 123.8854];
     const map = L.map(mapElement).setView(defaultCenter, 12);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    L.tileLayer(mapElement.dataset.tileUrl, {
+        attribution: mapElement.dataset.tileAttribution,
         maxZoom: 19
     }).addTo(map);
 

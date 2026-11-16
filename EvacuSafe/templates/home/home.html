@@ -17,6 +17,8 @@
         <h3>Live Evacuation Center Map</h3>
         <div id="evacuation-map" class="map-box"
              data-unmapped-count="{{ unmapped_center_count }}" role="application"
+             data-tile-url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+             data-tile-attribution="&copy; OpenStreetMap contributors &copy; CARTO"
              aria-label="Interactive map of evacuation centers"></div>
         <p id="map-status" class="map-status" role="status" aria-live="polite"></p>
         <div class="map-legend" aria-label="Center status legend">
