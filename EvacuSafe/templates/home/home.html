@@ -72,7 +72,7 @@
         <div class="table-scroll">
             <table class="centers-table">
                 <thead>
-                    <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th></tr>
+                    <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th><th>Update</th></tr>
                 </thead>
                 <tbody id="centers-table-body">
                 {% for c in centers %}
@@ -84,9 +84,22 @@
                         <small class="coordinate-note">Approximate map location</small>
                         {% endif %}
                     </td>
-                    <td><span class="badge {{ c.status }}">{{ c.get_status_display }}</span></td>
-                    <td>{{ c.occupants }}</td>
+                    <td>
+                        <select class="inline-control" name="status" form="update-center-{{ c.pk }}" aria-label="Status for {{ c.name }}">
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}"{% if c.status == value %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><input class="inline-control occupant-control" type="number" name="occupants" min="0" step="1" value="{{ c.occupants }}" form="update-center-{{ c.pk }}" aria-label="Occupants at {{ c.name }}"></td>
                     <td>{{ c.capacity }}</td>
+                    <td>
+                        <form id="update-center-{{ c.pk }}" class="inline-update-form" method="post" action="{% url 'update_center' c.pk %}">
+                            {% csrf_token %}
+                            <button class="btn inline-save-btn" type="submit">Save</button>
+                            <span class="inline-feedback" role="status" hidden></span>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
                 </tbody>

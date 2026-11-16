@@ -167,6 +167,68 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    tableBody.addEventListener('submit', async function (event) {
+        const updateForm = event.target.closest('.inline-update-form');
+        if (!updateForm) return;
+        event.preventDefault();
+
+        const saveButton = updateForm.querySelector('.inline-save-btn');
+        const updateFeedback = updateForm.querySelector('.inline-feedback');
+        updateFeedback.hidden = true;
+        updateFeedback.textContent = '';
+        saveButton.disabled = true;
+        saveButton.textContent = 'Saving';
+
+        try {
+            const response = await fetch(updateForm.action, {
+                method: 'POST',
+                body: new FormData(updateForm),
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                credentials: 'same-origin'
+            });
+            if (response.redirected) {
+                throw new Error('Your session has expired. Sign in again before updating a center.');
+            }
+            const result = await response.json();
+            if (!response.ok) {
+                const messages = Object.values(result.errors || {})
+                    .flatMap(function (errors) { return errors.map(function (error) { return error.message; }); });
+                throw new Error(messages.join(' ') || result.error || 'Could not update the evacuation center.');
+            }
+
+            const updatedCenter = result.center;
+            const centerIndex = centers.findIndex(function (center) {
+                return String(center.id) === String(updatedCenter.id);
+            });
+            if (centerIndex !== -1) centers[centerIndex] = updatedCenter;
+
+            const row = Array.from(tableBody.rows).find(function (item) {
+                return item.dataset.centerId === String(updatedCenter.id);
+            });
+            row.dataset.status = updatedCenter.status_key;
+            const marker = markerById.get(String(updatedCenter.id));
+            if (marker) {
+                marker.setStyle({fillColor: statusColor(updatedCenter.status_key)});
+                marker.setRadius(markerRadius(updatedCenter));
+                marker.bindPopup(createCenterPopup(updatedCenter));
+            }
+
+            updateSummary(result.summary);
+            mapElement.dataset.unmappedCount = String(result.unmapped_center_count);
+            mapElement.dataset.approximateCount = String(result.approximate_center_count);
+            applyFilters();
+            statusElement.textContent = result.message + ' ' + statusElement.textContent;
+            updateFeedback.textContent = 'Saved';
+            updateFeedback.hidden = false;
+        } catch (error) {
+            updateFeedback.textContent = error.message;
+            updateFeedback.hidden = false;
+        } finally {
+            saveButton.disabled = false;
+            saveButton.textContent = 'Save';
+        }
+    });
+
     function addMarker(center) {
         if (center.latitude === null || center.longitude === null) return;
         const marker = L.circleMarker([center.latitude, center.longitude], {
@@ -196,20 +258,70 @@ document.addEventListener('DOMContentLoaded', function () {
         location.textContent = center.location || '—';
         row.appendChild(location);
 
+        const updateFormId = 'update-center-' + center.id;
         const statusCell = document.createElement('td');
-        const badge = document.createElement('span');
-        badge.className = 'badge ' + center.status_key;
-        badge.textContent = center.status;
-        statusCell.appendChild(badge);
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'inline-control';
+        statusSelect.name = 'status';
+        statusSelect.setAttribute('form', updateFormId);
+        statusSelect.setAttribute('aria-label', 'Status for ' + center.name);
+        [
+            ['active', 'Active'],
+            ['standby', 'Standby'],
+            ['closed', 'Closed']
+        ].forEach(function (choice) {
+            const option = document.createElement('option');
+            option.value = choice[0];
+            option.textContent = choice[1];
+            option.selected = center.status_key === choice[0];
+            statusSelect.appendChild(option);
+        });
+        statusCell.appendChild(statusSelect);
         row.appendChild(statusCell);
 
         const occupants = document.createElement('td');
-        occupants.textContent = center.occupants;
+        const occupantInput = document.createElement('input');
+        occupantInput.className = 'inline-control occupant-control';
+        occupantInput.type = 'number';
+        occupantInput.name = 'occupants';
+        occupantInput.min = '0';
+        occupantInput.step = '1';
+        occupantInput.value = String(center.occupants);
+        occupantInput.setAttribute('form', updateFormId);
+        occupantInput.setAttribute('aria-label', 'Occupants at ' + center.name);
+        occupants.appendChild(occupantInput);
         row.appendChild(occupants);
 
         const capacity = document.createElement('td');
         capacity.textContent = center.capacity;
         row.appendChild(capacity);
+
+        const actions = document.createElement('td');
+        const updateForm = document.createElement('form');
+        updateForm.id = updateFormId;
+        updateForm.className = 'inline-update-form';
+        updateForm.method = 'post';
+        updateForm.action = mapElement.dataset.centersUrl + center.id + '/';
+        const csrfToken = document.querySelector('#center-form [name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = 'csrfmiddlewaretoken';
+            tokenInput.value = csrfToken.value;
+            updateForm.appendChild(tokenInput);
+        }
+        const saveButton = document.createElement('button');
+        saveButton.className = 'btn inline-save-btn';
+        saveButton.type = 'submit';
+        saveButton.textContent = 'Save';
+        updateForm.appendChild(saveButton);
+        const updateFeedback = document.createElement('span');
+        updateFeedback.className = 'inline-feedback';
+        updateFeedback.setAttribute('role', 'status');
+        updateFeedback.hidden = true;
+        updateForm.appendChild(updateFeedback);
+        actions.appendChild(updateForm);
+        row.appendChild(actions);
 
         tableBody.appendChild(row);
     }
