@@ -72,6 +72,10 @@ class HomeDashboardMapTests(TestCase):
         self.assertGreater(response.context['unmapped_center_count'], 0)
         self.assertContains(response, 'evacuation-map')
         self.assertContains(response, 'id="center-search"')
+        self.assertContains(response, 'id="open-create-center"')
+        self.assertContains(response, 'id="center-dialog"')
+        self.assertContains(response, 'name="latitude"')
+        self.assertContains(response, 'name="longitude"')
         self.assertContains(response, 'data-status-filter="all"')
         self.assertContains(response, 'data-status-filter="active"')
         self.assertContains(response, 'data-status-filter="standby"')
@@ -86,3 +90,83 @@ class HomeDashboardMapTests(TestCase):
         self.assertContains(response, 'OpenStreetMap contributors')
         self.assertContains(response, 'Sources: Esri')
         self.assertContains(response, 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js')
+
+
+class EvacuationCenterCreateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='coordinator', password='test-password')
+        self.url = reverse('manage_center')
+        self.initial_center_count = EvacuationCenter.objects.count()
+
+    def test_anonymous_user_cannot_create_center(self):
+        response = self.client.post(self.url, {'name': 'New Center'})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(EvacuationCenter.objects.count(), self.initial_center_count)
+
+    def test_authenticated_user_creates_center_and_receives_updated_summary(self):
+        self.client.force_login(self.user)
+        initial_active_count = EvacuationCenter.objects.filter(status='active').count()
+        initial_standby_count = EvacuationCenter.objects.filter(status='standby').count()
+        initial_closed_count = EvacuationCenter.objects.filter(status='closed').count()
+        initial_occupants = sum(EvacuationCenter.objects.values_list('occupants', flat=True))
+        initial_capacity = sum(EvacuationCenter.objects.values_list('capacity', flat=True))
+        EvacuationCenter.objects.create(
+            name='Existing Center',
+            status='active',
+            capacity=100,
+            occupants=40,
+        )
+
+        response = self.client.post(self.url, {
+            'name': 'New Center',
+            'location': 'Lahug',
+            'status': 'standby',
+            'capacity': 60,
+            'occupants': 12,
+            'latitude': '10.330000',
+            'longitude': '123.900000',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['center']['name'], 'New Center')
+        self.assertEqual(response.json()['center']['latitude'], 10.33)
+        self.assertEqual(response.json()['center']['status_key'], 'standby')
+        self.assertEqual(response.json()['summary'], {
+            'active_count': initial_active_count + 1,
+            'standby_count': initial_standby_count + 1,
+            'closed_count': initial_closed_count,
+            'total_count': self.initial_center_count + 2,
+            'total_occupants': initial_occupants + 52,
+            'total_capacity': initial_capacity + 160,
+        })
+        self.assertTrue(EvacuationCenter.objects.filter(name='New Center').exists())
+
+    def test_partial_coordinates_are_rejected_without_creating_center(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.url, {
+            'name': 'Unmapped Center',
+            'capacity': 10,
+            'occupants': 0,
+            'latitude': '10.330000',
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('longitude', response.json()['errors'])
+        self.assertEqual(EvacuationCenter.objects.count(), self.initial_center_count)
+
+    def test_coordinates_outside_geographic_range_are_rejected(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(self.url, {
+            'name': 'Invalid Center',
+            'capacity': 10,
+            'occupants': 0,
+            'latitude': '91',
+            'longitude': '123.9',
+        })
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('latitude', response.json()['errors'])
+        self.assertEqual(EvacuationCenter.objects.count(), self.initial_center_count)

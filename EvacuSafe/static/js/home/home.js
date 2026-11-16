@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const centers = JSON.parse(dataElement.textContent);
+    const form = document.getElementById('center-form');
+    const dialog = document.getElementById('center-dialog');
+    const feedback = document.getElementById('center-form-feedback');
+    const saveButton = document.getElementById('save-center-button');
     const map = L.map(mapElement).setView([10.3157, 123.8854], 12);
     L.tileLayer(mapElement.dataset.tileUrl, {
         attribution: mapElement.dataset.tileAttribution,
@@ -33,17 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const markerById = new Map();
     centers.forEach(function (center) {
-        if (center.latitude === null || center.longitude === null) return;
-        const marker = L.circleMarker([center.latitude, center.longitude], {
-            radius: markerRadius(center),
-            color: '#f8fafc',
-            weight: 2,
-            fillColor: statusColor(center.status_key),
-            fillOpacity: 0.95,
-            className: 'center-marker ' + center.status_key
-        }).addTo(map);
-        marker.bindPopup(createCenterPopup(center));
-        markerById.set(String(center.id), marker);
+        addMarker(center);
     });
 
     const mappedMarkers = Array.from(markerById.values());
@@ -101,6 +95,143 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
     applyFilters();
+
+    const openCreateButton = document.getElementById('open-create-center');
+    const closeDialogButtons = [
+        document.getElementById('close-center-dialog'),
+        document.getElementById('cancel-center-dialog')
+    ];
+    if (openCreateButton && dialog && form && feedback) {
+        openCreateButton.addEventListener('click', function () {
+            feedback.hidden = true;
+            feedback.textContent = '';
+            form.reset();
+            dialog.showModal();
+            document.getElementById('center-name').focus();
+        });
+
+        closeDialogButtons.forEach(function (button) {
+            if (button) button.addEventListener('click', function () {
+                dialog.close();
+            });
+        });
+
+        dialog.addEventListener('click', function (event) {
+            if (event.target === dialog) dialog.close();
+        });
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            feedback.hidden = true;
+            feedback.textContent = '';
+            saveButton.disabled = true;
+            saveButton.textContent = 'Saving…';
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {'X-Requested-With': 'XMLHttpRequest'},
+                    credentials: 'same-origin'
+                });
+                if (response.redirected) {
+                    throw new Error('Your session has expired. Sign in again before adding a center.');
+                }
+                const result = await response.json();
+                if (!response.ok) {
+                    const messages = Object.values(result.errors || {})
+                        .flatMap(function (errors) { return errors.map(function (error) { return error.message; }); });
+                    throw new Error(messages.join(' ') || result.error || 'Could not save the evacuation center.');
+                }
+
+                centers.push(result.center);
+                appendCenterRow(result.center);
+                addMarker(result.center);
+                updateSummary(result.summary);
+                mapElement.dataset.unmappedCount = String(result.unmapped_center_count);
+                mapElement.dataset.approximateCount = String(result.approximate_center_count);
+                applyFilters();
+                if (result.center.latitude !== null && result.center.longitude !== null) {
+                    map.setView([result.center.latitude, result.center.longitude], 14);
+                }
+                statusElement.textContent = result.message + ' ' + statusElement.textContent;
+                dialog.close();
+                form.reset();
+            } catch (error) {
+                feedback.textContent = error.message;
+                feedback.hidden = false;
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = 'Save center';
+            }
+        });
+    }
+
+    function addMarker(center) {
+        if (center.latitude === null || center.longitude === null) return;
+        const marker = L.circleMarker([center.latitude, center.longitude], {
+            radius: markerRadius(center),
+            color: '#f8fafc',
+            weight: 2,
+            fillColor: statusColor(center.status_key),
+            fillOpacity: 0.95,
+            className: 'center-marker ' + center.status_key
+        }).addTo(map);
+        marker.bindPopup(createCenterPopup(center));
+        markerById.set(String(center.id), marker);
+    }
+
+    function appendCenterRow(center) {
+        const row = document.createElement('tr');
+        row.dataset.centerId = String(center.id);
+        row.dataset.status = center.status_key;
+        row.dataset.name = center.name.toLocaleLowerCase();
+        row.dataset.location = center.location.toLocaleLowerCase();
+
+        const name = document.createElement('td');
+        name.textContent = center.name;
+        row.appendChild(name);
+
+        const location = document.createElement('td');
+        location.textContent = center.location || '—';
+        row.appendChild(location);
+
+        const statusCell = document.createElement('td');
+        const badge = document.createElement('span');
+        badge.className = 'badge ' + center.status_key;
+        badge.textContent = center.status;
+        statusCell.appendChild(badge);
+        row.appendChild(statusCell);
+
+        const occupants = document.createElement('td');
+        occupants.textContent = center.occupants;
+        row.appendChild(occupants);
+
+        const capacity = document.createElement('td');
+        capacity.textContent = center.capacity;
+        row.appendChild(capacity);
+
+        tableBody.appendChild(row);
+    }
+
+    function updateSummary(summary) {
+        document.getElementById('active-center-count').textContent =
+            summary.active_count + ' / ' + summary.total_count;
+        document.getElementById('total-occupants').textContent = summary.total_occupants;
+        document.getElementById('capacity-used').textContent =
+            summary.total_occupants + ' / ' + summary.total_capacity;
+        filterButtons.forEach(function (button) {
+            const count = button.querySelector('span');
+            if (!count) return;
+            const counts = {
+                all: summary.total_count,
+                active: summary.active_count,
+                standby: summary.standby_count,
+                closed: summary.closed_count
+            };
+            count.textContent = counts[button.dataset.statusFilter];
+        });
+    }
 
     function markerRadius(center) {
         const utilization = center.capacity > 0
