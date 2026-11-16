@@ -1,0 +1,26 @@
+ EvacuSafe/README.md                                |  11 +-
+ EvacuSafe/apps/home/admin.py                       |  12 +-
+ ...oncenter_latitude_evacuationcenter_longitude.py |  24 ++
+ .../0004_add_verified_seed_center_coordinates.py   |  40 +++
+ ...evacuationcenter_coordinates_are_approximate.py |  57 ++++
+ EvacuSafe/apps/home/models.py                      |  16 +
+ EvacuSafe/apps/home/tests.py                       |  80 ++++-
+ EvacuSafe/apps/home/views.py                       |  27 ++
+ .../0002_alter_usersettings_dark_mode.py           |  24 ++
+ EvacuSafe/apps/user_settings/models.py             |   2 +-
+ EvacuSafe/apps/user_settings/tests.py              |  42 ++-
+ EvacuSafe/static/css/base.css                      | 364 +++++++++++++++------
+ EvacuSafe/static/css/home/home.css                 |  87 +++--
+ EvacuSafe/static/css/login/login.css               |  46 +--
+ EvacuSafe/static/css/profile/profile.css           | 103 +++---
+ EvacuSafe/static/css/register/register.css         |  47 +--
+ EvacuSafe/static/css/user_settings/settings.css    |  69 ++--
+ EvacuSafe/static/js/home/home.js                   | 118 ++++++-
+ EvacuSafe/static/js/user_settings/settings.js      |   1 +
+ EvacuSafe/templates/base.html                      |  14 +-
+ EvacuSafe/templates/home/home.html                 |  30 +-
+ EvacuSafe/templates/login/login.html               |  16 +-
+ EvacuSafe/templates/profile/profile.html           |  18 +-
+ EvacuSafe/templates/register/register.html         |  18 +-
+ EvacuSafe/templates/user_settings/settings.html    |  21 +-
+ 25 files changed, 946 insertions(+), 341 deletions(-)

@@ -1,0 +1,98 @@
+commit b215d1b689ef95dd5328a491419a2038a5022c46
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:44:13 +0800
+
+    Polish dashboard profile and settings UI
+
+ EvacuSafe/README.md                             |  11 ++-
+ EvacuSafe/apps/user_settings/tests.py           |  18 ++++-
+ EvacuSafe/static/css/home/home.css              | 101 ++++++++++++++---------
+ EvacuSafe/static/css/profile/profile.css        | 103 +++++++++++++-----------
+ EvacuSafe/static/css/user_settings/settings.css |  69 +++++++++-------
+ EvacuSafe/static/js/user_settings/settings.js   |   1 +
+ EvacuSafe/templates/base.html                   |   2 +-
+ EvacuSafe/templates/home/home.html              |   5 +-
+ EvacuSafe/templates/profile/profile.html        |  18 +++--
+ EvacuSafe/templates/user_settings/settings.html |  19 +++--
+ 10 files changed, 213 insertions(+), 134 deletions(-)
+
+commit d5d0fd2523a85773641043cee9d053807d2a4caa
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:39:23 +0800
+
+    Set dark theme default and refresh auth pages
+
+ .../0002_alter_usersettings_dark_mode.py           |  24 ++
+ EvacuSafe/apps/user_settings/models.py             |   2 +-
+ EvacuSafe/apps/user_settings/tests.py              |  26 +-
+ EvacuSafe/static/css/base.css                      | 364 +++++++++++++++------
+ EvacuSafe/static/css/login/login.css               |  46 +--
+ EvacuSafe/static/css/register/register.css         |  47 +--
+ EvacuSafe/templates/base.html                      |  14 +-
+ EvacuSafe/templates/login/login.html               |  16 +-
+ EvacuSafe/templates/register/register.html         |  18 +-
+ EvacuSafe/templates/user_settings/settings.html    |   2 +-
+ 10 files changed, 346 insertions(+), 213 deletions(-)
+
+commit 16b7d9fff181691e7485d5678370b58ad4a65b9a
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:35:34 +0800
+
+    Switch evacuation map to Esri tiles
+
+ EvacuSafe/apps/home/tests.py       | 4 ++--
+ EvacuSafe/templates/home/home.html | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+commit 8090cd5d5a80b00963fd4b942866156245236e79
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:34:24 +0800
+
+    Mark approximate evacuation center locations
+
+ EvacuSafe/apps/home/admin.py                       | 12 ++++-
+ ...evacuationcenter_coordinates_are_approximate.py | 57 ++++++++++++++++++++++
+ EvacuSafe/apps/home/models.py                      |  1 +
+ EvacuSafe/apps/home/tests.py                       | 14 ++++++
+ EvacuSafe/apps/home/views.py                       |  8 +++
+ EvacuSafe/static/css/home/home.css                 |  1 +
+ EvacuSafe/static/js/home/home.js                   | 12 +++++
+ EvacuSafe/templates/home/home.html                 | 10 +++-
+ 8 files changed, 112 insertions(+), 3 deletions(-)
+
+commit a3205e794c8aa78da431b824fe1bae68a7098d78
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:31:14 +0800
+
+    Use CARTO tiles for evacuation map
+
+ .../0004_add_verified_seed_center_coordinates.py   | 40 ++++++++++++++++++++++
+ EvacuSafe/apps/home/tests.py                       |  6 ++++
+ EvacuSafe/static/js/home/home.js                   |  4 +--
+ EvacuSafe/templates/home/home.html                 |  2 ++
+ 4 files changed, 50 insertions(+), 2 deletions(-)
+
+commit 92d0be982de3fde7cb376766cd319ca836fdbe77
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:23:23 +0800
+
+    Add interactive evacuation center map
+
+ EvacuSafe/apps/home/tests.py       |  34 +++++++++++-
+ EvacuSafe/apps/home/views.py       |  19 +++++++
+ EvacuSafe/static/css/home/home.css |  17 +++++-
+ EvacuSafe/static/js/home/home.js   | 106 ++++++++++++++++++++++++++++++++++---
+ EvacuSafe/templates/home/home.html |  15 +++++-
+ 5 files changed, 181 insertions(+), 10 deletions(-)
+
+commit 2c9debe556154a9bfa638595077909a7d27bba61
+Author: LAB27_USER ON WS39 <L27X15W39@LabHCI.net>
+Date:   2026-11-16 16:20:12 +0800
+
+    Add evacuation center coordinates
+
+ EvacuSafe/apps/home/admin.py                       |  2 +-
+ ...oncenter_latitude_evacuationcenter_longitude.py | 24 +++++++++++++++++++
+ EvacuSafe/apps/home/models.py                      | 15 ++++++++++++
+ EvacuSafe/apps/home/tests.py                       | 28 +++++++++++++++++++++-
+ 4 files changed, 67 insertions(+), 2 deletions(-)
