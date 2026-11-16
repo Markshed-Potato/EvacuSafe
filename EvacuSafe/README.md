@@ -79,10 +79,9 @@ python manage.py runserver
 
 See `SUPABASE_SETUP.md` for connecting to a Supabase PostgreSQL database.
 
-## Dark mode
+## Appearance
 
-Dark mode is a per-user preference stored on `UserSettings.dark_mode` (apps/user_settings).
-`templates/base.html` renders the `dark-mode` class on `<body>` from
-`user.settings.dark_mode`, and `static/css/base.css` defines the full set of light/dark
-CSS variables consumed by every page's stylesheet — so the theme is consistent across
-Home, Profile, and Settings, and persists across navigation (no client-side-only hacks).
+Dark mode is the default for new and existing accounts. The per-user preference is stored
+on `UserSettings.dark_mode` (`apps/user_settings`). Users can opt into light mode from
+Settings; `templates/base.html` applies the saved theme consistently across authentication,
+Home, Profile, and Settings pages.

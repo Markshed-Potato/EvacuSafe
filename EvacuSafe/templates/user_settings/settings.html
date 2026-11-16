@@ -6,7 +6,10 @@
 {% endblock %}
 {% block content %}
 <div class="page-header">
-    <h1>SETTINGS</h1>
+    <div class="page-heading-copy">
+        <h1>Settings</h1>
+        <p>Personalize alerts, appearance, and account security</p>
+    </div>
 </div>
 
 <div class="settings-grid">
@@ -16,25 +19,25 @@
         <form method="POST">
             {% csrf_token %}
             <div class="toggle-row">
-                <label>Email Notifications
+                <label for="{{ settings_form.email_notifications.id_for_label }}">Email notifications
                     <span class="desc">Get alerts and summaries by email</span>
                 </label>
                 {{ settings_form.email_notifications }}
             </div>
             <div class="toggle-row">
-                <label>SMS Alerts
+                <label for="{{ settings_form.sms_alerts.id_for_label }}">SMS alerts
                     <span class="desc">Critical evacuation alerts via SMS</span>
                 </label>
                 {{ settings_form.sms_alerts }}
             </div>
             <div class="toggle-row">
-                <label>Dark Mode
+                <label for="{{ settings_form.dark_mode.id_for_label }}">Dark mode
                     <span class="desc">Use the dark theme across EvacuSafe</span>
                 </label>
                 {{ settings_form.dark_mode }}
             </div>
             <div class="select-row">
-                <label>Language</label>
+                <label for="{{ settings_form.language.id_for_label }}">Language</label>
                 {{ settings_form.language }}
             </div>
             <button type="submit" name="save_settings" class="btn save-btn">Save Settings</button>
@@ -47,15 +50,15 @@
         <form method="POST">
             {% csrf_token %}
             <div class="form-row">
-                <label>Current Password</label>
+                <label for="{{ password_form.old_password.id_for_label }}">Current password</label>
                 {{ password_form.old_password }}
             </div>
             <div class="form-row">
-                <label>New Password</label>
+                <label for="{{ password_form.new_password1.id_for_label }}">New password</label>
                 {{ password_form.new_password1 }}
             </div>
             <div class="form-row">
-                <label>Confirm New Password</label>
+                <label for="{{ password_form.new_password2.id_for_label }}">Confirm new password</label>
                 {{ password_form.new_password2 }}
             </div>
             {% if password_form.errors %}
