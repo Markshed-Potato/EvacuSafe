@@ -8,20 +8,24 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %}{% if user.is_authenticated and user.settings.dark_mode %} dark-mode{% endif %}">
+<body class="{% block body_class %}{% endblock %} {% if not user.is_authenticated or user.settings.dark_mode %}dark-mode{% else %}light-mode{% endif %}">
     {% if user.is_authenticated %}
     <div class="app-shell">
         <aside class="sidebar">
             <h2 class="brand">EVACUSAFE</h2>
+            <p class="brand-caption">Response network</p>
             <nav>
                 <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Live Dashboard</a>
                 <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Profile</a>
                 <a href="{% url 'user_settings' %}" class="{% if request.resolver_match.url_name == 'user_settings' %}active{% endif %}">Settings</a>
             </nav>
-            <form action="{% url 'logout' %}" method="post" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="logout-link">Log Out</button>
-            </form>
+            <div class="sidebar-footer">
+                <p class="sidebar-user">{{ user.username }}<span>Responder account</span></p>
+                <form action="{% url 'logout' %}" method="post" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-link">Log out</button>
+                </form>
+            </div>
         </aside>
         <div class="main-content">
             {% if messages %}

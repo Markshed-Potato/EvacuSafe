@@ -1,0 +1,12 @@
+ M EvacuSafe/apps/home/tests.py
+ M EvacuSafe/apps/home/views.py
+ M EvacuSafe/static/css/home/home.css
+ M EvacuSafe/static/js/home/home.js
+ M EvacuSafe/templates/home/home.html
+?? BASELINE_COMMIT.txt
+?? EvacuSafe/apps/home/forms.py
+?? GIT_ALL_COMMITTED_CHANGES.patch
+?? GIT_COMMIT_DETAILS.txt
+?? GIT_HISTORY.txt
+?? GIT_STATUS.txt
+?? GIT_UNCOMMITTED_CHANGES.patch

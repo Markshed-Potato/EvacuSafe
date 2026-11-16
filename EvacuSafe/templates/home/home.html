@@ -2,64 +2,177 @@
 {% load static %}
 {% block title %}EvacuSafe - Dashboard{% endblock %}
 {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <link rel="stylesheet" href="{% static 'css/home/home.css' %}">
 {% endblock %}
 {% block content %}
 <div class="page-header">
-    <h1>HOME SCREEN / DISASTER MONITORING</h1>
-    <span class="status-badge" id="system-status-badge">● SYSTEM ACTIVE</span>
+    <div class="page-heading-copy">
+        <h1>Live operations</h1>
+        <p>Evacuation center availability and capacity overview</p>
+    </div>
+    <div class="header-actions">
+        <span class="status-badge" id="system-status-badge">● SYSTEM ACTIVE</span>
+        <button type="button" class="btn add-center-btn" id="open-create-center">Add center <span aria-hidden="true">+</span></button>
+    </div>
 </div>
 
 <div class="dashboard-body">
     <div class="map-card">
         <h3>Live Evacuation Center Map</h3>
-        <div class="map-box">
-            [ Interactive GIS Map Placeholder: Active Zones &amp; Centers ]
+        <div class="map-filter-bar">
+            <span>Filter map and center list</span>
+            <div class="filter-pills map-filter-pills" role="group" aria-label="Filter map and center list by status">
+                <button type="button" class="filter-pill active" data-status-filter="all" aria-pressed="true">All <span>{{ total_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="active" aria-pressed="false">Active <span>{{ active_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="standby" aria-pressed="false">Standby <span>{{ standby_count }}</span></button>
+                <button type="button" class="filter-pill" data-status-filter="closed" aria-pressed="false">Closed <span>{{ closed_count }}</span></button>
+            </div>
+        </div>
+        <div id="evacuation-map" class="map-box"
+             data-unmapped-count="{{ unmapped_center_count }}"
+             data-approximate-count="{{ approximate_center_count }}" role="application"
+             data-centers-url="{% url 'manage_center' %}"
+             data-tile-url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
+             data-tile-attribution="Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; OpenStreetMap contributors, and the GIS User Community"
+             aria-label="Interactive map of evacuation centers"></div>
+        <p id="map-status" class="map-status" role="status" aria-live="polite"></p>
+        <div class="map-legend" aria-label="Center status legend">
+            <span><i class="legend-dot active"></i> Active</span>
+            <span><i class="legend-dot standby"></i> Standby</span>
+            <span><i class="legend-dot closed"></i> Closed</span>
         </div>
     </div>
 
     <div class="stats-column">
         <div class="stat-card">
             <h3>Active Centers</h3>
-            <p class="value">{{ active_count }} / {{ total_count }}</p>
+            <p class="value" id="active-center-count">{{ active_count }} / {{ total_count }}</p>
         </div>
         <div class="stat-card">
             <h3>Evacuees Sheltered</h3>
-            <p class="value">{{ total_occupants }}</p>
+            <p class="value" id="total-occupants">{{ total_occupants }}</p>
         </div>
         <div class="stat-card">
             <h3>Capacity Used</h3>
-            <p class="value green">{{ total_occupants }} / {{ total_capacity }}</p>
+            <p class="value green" id="capacity-used">{{ total_occupants }} / {{ total_capacity }}</p>
         </div>
     </div>
 
     <div class="centers-table-card">
-        <h3>Evacuation Centers (live from database)</h3>
-        {% if centers %}
+        <div class="centers-table-heading">
+            <div>
+                <h3>Evacuation centers</h3>
+                <p>Find centers by name or location and filter by availability.</p>
+            </div>
+            <label class="center-search">
+                <span class="visually-hidden">Search by center name or location</span>
+                <span aria-hidden="true" class="search-icon">⌕</span>
+                <input type="search" id="center-search" placeholder="Search centers or barangay…" autocomplete="off">
+            </label>
+        </div>
+        <div class="filter-pills" role="group" aria-label="Filter centers by status">
+            <button type="button" class="filter-pill active" data-status-filter="all" aria-pressed="true">All <span>{{ total_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="active" aria-pressed="false">Active <span>{{ active_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="standby" aria-pressed="false">Standby <span>{{ standby_count }}</span></button>
+            <button type="button" class="filter-pill" data-status-filter="closed" aria-pressed="false">Closed <span>{{ closed_count }}</span></button>
+        </div>
         <div class="table-scroll">
-        <table class="centers-table">
-            <thead>
-                <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th></tr>
-            </thead>
-            <tbody>
+            <table class="centers-table">
+                <thead>
+                    <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th><th>Update</th></tr>
+                </thead>
+                <tbody id="centers-table-body">
                 {% for c in centers %}
-                <tr>
+                <tr data-center-id="{{ c.pk }}" data-status="{{ c.status }}" data-name="{{ c.name|lower }}" data-location="{{ c.location|lower }}">
                     <td>{{ c.name }}</td>
-                    <td>{{ c.location|default:"—" }}</td>
-                    <td><span class="badge {{ c.status }}">{{ c.get_status_display }}</span></td>
-                    <td>{{ c.occupants }}</td>
+                    <td>
+                        {{ c.location|default:"—" }}
+                        {% if c.coordinates_are_approximate %}
+                        <small class="coordinate-note">Approximate map location</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <select class="inline-control" name="status" form="update-center-{{ c.pk }}" aria-label="Status for {{ c.name }}">
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}"{% if c.status == value %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><input class="inline-control occupant-control" type="number" name="occupants" min="0" step="1" value="{{ c.occupants }}" form="update-center-{{ c.pk }}" aria-label="Occupants at {{ c.name }}"></td>
                     <td>{{ c.capacity }}</td>
+                    <td>
+                        <form id="update-center-{{ c.pk }}" class="inline-update-form" method="post" action="{% url 'update_center' c.pk %}">
+                            {% csrf_token %}
+                            <button class="btn inline-save-btn" type="submit">Save</button>
+                            <span class="inline-feedback" role="status" hidden></span>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
         </div>
-        {% else %}
-        <p class="empty-state">No evacuation centers yet. Add some in the Django admin at /admin/.</p>
-        {% endif %}
+        <p class="empty-state" id="center-empty-state" hidden>No centers match these filters. Try another search or status.</p>
     </div>
 </div>
+<dialog class="center-dialog" id="center-dialog" aria-labelledby="center-dialog-title">
+    <form id="center-form" method="post" action="{% url 'manage_center' %}" novalidate>
+        {% csrf_token %}
+        <div class="dialog-heading">
+            <div>
+                <p class="dialog-kicker">Center management</p>
+                <h2 id="center-dialog-title">Add evacuation center</h2>
+            </div>
+            <button type="button" class="dialog-close" id="close-center-dialog" aria-label="Close dialog">×</button>
+        </div>
+        <p class="dialog-description">Add a center and its current capacity information.</p>
+        <div class="dialog-form-grid">
+            <div class="dialog-field full">
+                <label for="center-name">Center name</label>
+                <input id="center-name" name="name" maxlength="150" required>
+            </div>
+            <div class="dialog-field full">
+                <label for="center-location">Location / barangay</label>
+                <input id="center-location" name="location" maxlength="200">
+            </div>
+            <div class="dialog-field">
+                <label for="center-status">Status</label>
+                <select id="center-status" name="status">
+                    <option value="active">Active</option>
+                    <option value="standby">Standby</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </div>
+            <div class="dialog-field">
+                <label for="center-capacity">Capacity</label>
+                <input id="center-capacity" type="number" name="capacity" min="0" step="1" value="0" required>
+            </div>
+            <div class="dialog-field">
+                <label for="center-occupants">Current occupants</label>
+                <input id="center-occupants" type="number" name="occupants" min="0" step="1" value="0" required>
+            </div>
+            <div class="dialog-field">
+                <label for="center-latitude">Latitude <span>optional</span></label>
+                <input id="center-latitude" type="number" name="latitude" min="-90" max="90" step="any">
+            </div>
+            <div class="dialog-field">
+                <label for="center-longitude">Longitude <span>optional</span></label>
+                <input id="center-longitude" type="number" name="longitude" min="-180" max="180" step="any">
+            </div>
+        </div>
+        <p class="dialog-feedback" id="center-form-feedback" role="alert" hidden></p>
+        <div class="dialog-actions">
+            <button type="button" class="btn secondary-btn" id="cancel-center-dialog">Cancel</button>
+            <button type="submit" class="btn" id="save-center-button">Save center</button>
+        </div>
+    </form>
+</dialog>
+{{ centers_data|json_script:"evacuation-centers-data" }}
 {% endblock %}
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="{% static 'js/home/home.js' %}"></script>
 {% endblock %}

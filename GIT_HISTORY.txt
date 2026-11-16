@@ -1,0 +1,7 @@
+b215d1b | LAB27_USER ON WS39 | 2026-11-16 16:44:13 +0800 | Polish dashboard profile and settings UI
+d5d0fd2 | LAB27_USER ON WS39 | 2026-11-16 16:39:23 +0800 | Set dark theme default and refresh auth pages
+16b7d9f | LAB27_USER ON WS39 | 2026-11-16 16:35:34 +0800 | Switch evacuation map to Esri tiles
+8090cd5 | LAB27_USER ON WS39 | 2026-11-16 16:34:24 +0800 | Mark approximate evacuation center locations
+a3205e7 | LAB27_USER ON WS39 | 2026-11-16 16:31:14 +0800 | Use CARTO tiles for evacuation map
+92d0be9 | LAB27_USER ON WS39 | 2026-11-16 16:23:23 +0800 | Add interactive evacuation center map
+2c9debe | LAB27_USER ON WS39 | 2026-11-16 16:20:12 +0800 | Add evacuation center coordinates

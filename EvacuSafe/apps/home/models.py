@@ -25,6 +25,7 @@ class EvacuationCenter(models.Model):
         null=True,
         validators=[MinValueValidator(-180), MaxValueValidator(180)],
     )
+    coordinates_are_approximate = models.BooleanField(default=False)
     capacity = models.PositiveIntegerField(default=0)
     occupants = models.PositiveIntegerField(default=0)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
