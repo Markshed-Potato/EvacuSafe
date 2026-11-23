@@ -4,6 +4,27 @@ import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
+from django.db.migrations.exceptions import IrreversibleError
+
+
+class AddFieldIfMissing(migrations.AddField):
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        model = to_state.apps.get_model(app_label, self.model_name)
+        with schema_editor.connection.cursor() as cursor:
+            columns = {
+                column.name
+                for column in schema_editor.connection.introspection.get_table_description(
+                    cursor,
+                    model._meta.db_table,
+                )
+            }
+        if model._meta.get_field(self.name).column not in columns:
+            super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        raise IrreversibleError(
+            'created_at may predate this migration; removing it could destroy existing data.'
+        )
 
 
 class Migration(migrations.Migration):
@@ -24,7 +45,7 @@ class Migration(migrations.Migration):
             name='archived_by',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='archived_centers', to=settings.AUTH_USER_MODEL),
         ),
-        migrations.AddField(
+        AddFieldIfMissing(
             model_name='evacuationcenter',
             name='created_at',
             field=models.DateTimeField(default=django.utils.timezone.now),

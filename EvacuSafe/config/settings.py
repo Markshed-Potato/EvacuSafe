@@ -118,7 +118,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ---------------------------------------------------------------------------
 DATABASE_URL = config('DATABASE_URL', default='').strip()
 USE_SQLITE = config('USE_SQLITE', default=False, cast=bool)
-IS_INACTIVE_TENANT = 'tbagvomzegfpexashzwf' in DATABASE_URL or '[YOUR-PROJECT-REF]' in DATABASE_URL
 
 if IS_TESTING:
     DATABASES = {
@@ -127,7 +126,7 @@ if IS_TESTING:
             'NAME': ':memory:',
         }
     }
-elif USE_SQLITE or not DATABASE_URL or (DEBUG and IS_INACTIVE_TENANT):
+elif USE_SQLITE or not DATABASE_URL:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
