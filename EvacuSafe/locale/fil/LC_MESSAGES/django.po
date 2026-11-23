@@ -1,0 +1,64 @@
+# Filipino translation for EvacuSafe.
+# Copyright (C) 2026 EvacuSafe
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: EvacuSafe 2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-23 15:00+0800\n"
+"PO-Revision-Date: 2026-11-23 15:00+0800\n"
+"Last-Translator: EvacuSafe Team\n"
+"Language-Team: Filipino\n"
+"Language: fil\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Live Dashboard"
+msgstr "Aktibong Dashboard"
+
+msgid "Profile"
+msgstr "Propayl"
+
+msgid "Settings"
+msgstr "Mga Setting"
+
+msgid "Log out"
+msgstr "Mag-log out"
+
+msgid "Live operations"
+msgstr "Mga Kasalukuyang Operasyon"
+
+msgid "Active Centers"
+msgstr "Mga Aktibong Sentro"
+
+msgid "Evacuees Sheltered"
+msgstr "Mga Lumikas na Sinilungan"
+
+msgid "Capacity Used"
+msgstr "Nagamit na Kapasidad"
+
+msgid "Evacuation centers"
+msgstr "Mga Sentro ng Paglikas"
+
+msgid "Notification Preferences"
+msgstr "Mga Kagustuhan sa Notipikasyon"
+
+msgid "Email notifications"
+msgstr "Mga Notipikasyon sa Email"
+
+msgid "SMS alerts"
+msgstr "Mga Alerto sa SMS"
+
+msgid "Dark mode"
+msgstr "Madilim na Mode"
+
+msgid "Language"
+msgstr "Wika"
+
+msgid "Save Settings"
+msgstr "I-save ang mga Setting"
+
+msgid "Change Password"
+msgstr "Baguhin ang Password"

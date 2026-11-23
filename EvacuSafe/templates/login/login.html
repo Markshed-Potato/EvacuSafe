@@ -21,7 +21,10 @@
                     {% if form.username.errors %}<div class="field-errors">{{ form.username.errors|striptags }}</div>{% endif %}
                 </div>
                 <div class="input-group">
-                    <label for="id_password">Password</label>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label for="id_password">Password</label>
+                        <a href="{% url 'password_reset' %}" class="field-hint" style="color:var(--cyan); text-decoration:none; font-size:11px;">Forgot password?</a>
+                    </div>
                     {{ form.password }}
                     {% if form.password.errors %}<div class="field-errors">{{ form.password.errors|striptags }}</div>{% endif %}
                 </div>
