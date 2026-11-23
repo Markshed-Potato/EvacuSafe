@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}EvacuSafe - Profile{% endblock %}
+{% block title %}EvacuSafe - Responder Profile{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/profile/profile.css' %}">
 {% endblock %}
@@ -8,7 +8,7 @@
 <div class="page-header">
     <div class="page-heading-copy">
         <h1>Your profile</h1>
-        <p>Manage your responder details and contact information</p>
+        <p>Manage your responder details, operational credentials and account administration</p>
     </div>
 </div>
 
@@ -20,7 +20,7 @@
         </div>
         <div class="profile-identity">
             <h2>{{ request.user.username }}</h2>
-            <p>{{ profile.role|default:"Responder" }} &middot; joined {{ profile.created_at|date:"M Y" }}</p>
+            <p><span class="badge {{ user_role|lower }}">{{ user_role }}</span> &middot; joined {{ profile.created_at|date:"M Y" }}</p>
         </div>
     </div>
 
@@ -54,19 +54,20 @@
             {% if user_form.email.errors %}<div class="field-errors">{{ user_form.email.errors|striptags }}</div>{% endif %}
         </div>
 
-        <h3 class="section-label">Responder Details</h3>
+        <h3 class="section-label">Responder Credentials & Role</h3>
         <div class="two-col">
             <div class="form-row">
-                <label for="{{ profile_form.role.id_for_label }}">Role</label>
+                <label for="{{ profile_form.role.id_for_label }}">Role Authorization</label>
                 {{ profile_form.role }}
+                {% if profile_form.role.errors %}<div class="field-errors">{{ profile_form.role.errors|striptags }}</div>{% endif %}
             </div>
             <div class="form-row">
-                <label for="{{ profile_form.phone.id_for_label }}">Phone</label>
+                <label for="{{ profile_form.phone.id_for_label }}">Emergency Phone</label>
                 {{ profile_form.phone }}
             </div>
         </div>
         <div class="form-row">
-            <label for="{{ profile_form.bio.id_for_label }}">Bio</label>
+            <label for="{{ profile_form.bio.id_for_label }}">Deployment Bio / Sector Notes</label>
             {{ profile_form.bio }}
         </div>
 
@@ -74,8 +75,90 @@
             <button type="submit" class="btn save-btn">Save Changes</button>
         </div>
     </form>
+
+    <hr class="divider">
+
+    <!-- Account Administration & Active Session Information -->
+    <div class="account-admin-section">
+        <h3 class="section-label">Active Session & Security Diagnostics</h3>
+        <div class="session-info-grid">
+            <div class="session-info-item">
+                <span class="label">Client IP Address</span>
+                <span class="value">{{ session_info.ip_address }}</span>
+            </div>
+            <div class="session-info-item">
+                <span class="label">Last Login</span>
+                <span class="value">{{ session_info.last_login|date:"Y-m-d H:i:s" }}</span>
+            </div>
+            <div class="session-info-item">
+                <span class="label">Account Created</span>
+                <span class="value">{{ session_info.date_joined|date:"Y-m-d" }}</span>
+            </div>
+            <div class="session-info-item full">
+                <span class="label">Browser & Environment</span>
+                <span class="value code-val">{{ session_info.user_agent }}</span>
+            </div>
+        </div>
+
+        <div class="security-actions-row">
+            <a href="{% url 'user_settings' %}" class="btn secondary-btn">Change Password in Settings</a>
+        </div>
+
+        <h3 class="section-label danger-title">Danger Zone</h3>
+        <div class="danger-box">
+            <div class="danger-item">
+                <div>
+                    <strong>Deactivate Account</strong>
+                    <p>Temporarily disable your login credentials and responder access.</p>
+                </div>
+                <form method="POST" onsubmit="return confirm('Are you sure you want to deactivate your account? You will be logged out immediately.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="deactivate_account">
+                    <button type="submit" class="btn btn-warning-action">Deactivate Account</button>
+                </form>
+            </div>
+            <div class="danger-item">
+                <div>
+                    <strong>Delete Account Permanently</strong>
+                    <p>Erase your account, login credentials, and user data. This cannot be undone.</p>
+                </div>
+                <button type="button" class="btn btn-danger-action" id="open-account-delete-modal">Delete Account</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Account Deletion Modal -->
+<dialog class="center-dialog confirm-dialog" id="account-delete-dialog">
+    <form method="POST" class="dialog-inner">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_account">
+        <h3>Confirm Permanent Account Deletion</h3>
+        <p class="danger-warning">⚠ This action is irreversible. To proceed, please type your username (<strong>{{ request.user.username }}</strong>) below to confirm.</p>
+        <div class="form-row">
+            <label for="confirm-username">Confirm Username:</label>
+            <input type="text" id="confirm-username" name="confirm_username" required autocomplete="off" placeholder="{{ request.user.username }}">
+        </div>
+        <div class="dialog-actions">
+            <button type="button" class="btn secondary-btn" id="close-account-delete-modal">Cancel</button>
+            <button type="submit" class="btn btn-danger-action">Permanently Delete My Account</button>
+        </div>
+    </form>
+</dialog>
 {% endblock %}
 {% block extra_js %}
 <script src="{% static 'js/profile/profile.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('account-delete-dialog');
+    const openBtn = document.getElementById('open-account-delete-modal');
+    const closeBtn = document.getElementById('close-account-delete-modal');
+    if (openBtn && modal) {
+        openBtn.addEventListener('click', function() { modal.showModal(); });
+    }
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', function() { modal.close(); });
+    }
+});
+</script>
 {% endblock %}
