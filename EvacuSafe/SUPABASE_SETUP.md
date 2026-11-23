@@ -2,62 +2,76 @@
 
 ## 1. Create the Supabase project
 1. Go to https://supabase.com/dashboard → **New Project**.
-2. Pick a name, database password (save it), and region.
-3. Wait for provisioning to finish.
+2. Pick a name, database password (save it securely), and select your desired region.
+3. Wait for project provisioning to complete.
 
 ## 2. Get your connection string
-Project → **Settings → Database → Connection string → URI**.
-Use the **Session pooler** or **Transaction pooler** string for hosted apps, or the
-direct connection (port 5432) for local development:
+In your Supabase project dashboard:
+Navigate to **Project Settings → Database → Connection string → URI**.
 
-```
-postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres
+Choose the appropriate connection URI:
+- **Transaction Pooler (port 6543):** Recommended for containerized or serverless deployments (Render, Railway, Heroku).
+- **Session Pooler (port 5432):** Alternative pooler mode.
+- **Direct Connection (port 5432):** Recommended for migrations and local development if direct external IPv4/IPv6 access is supported.
+
+Connection string format:
+```text
+postgresql://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
 ```
 
 ## 3. Configure environment variables
+Copy the environment template:
 ```bash
 cp .env.example .env
 ```
-Edit `.env` and paste your real connection string into `DATABASE_URL`, and set a
-proper `SECRET_KEY` (any long random string).
+Edit `.env` and set:
+- `DATABASE_URL`: Your Supabase PostgreSQL URI (with `sslmode=require`).
+- `SECRET_KEY`: A cryptographically secure random string.
+- `DEBUG`: `False` for production (`True` for local development).
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY`: From **Project Settings → API**.
 
 ## 4. Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-(This installs `psycopg2-binary` for the Postgres driver, `python-decouple` to read
-`.env`, and `dj-database-url` to parse `DATABASE_URL` in `settings.py`.)
+This installs `psycopg2-binary` (PostgreSQL driver), `python-decouple` (environment parser), `dj-database-url` (connection string parser), `whitenoise` (static file serving), and `gunicorn` (production WSGI server).
 
-## 5. Verify the connection
+## 5. Verify the connection & system health
 ```bash
 python manage.py check
 ```
-`settings.py` reads `DATABASE_URL` from `.env` — if it's set, Django connects to
-Supabase Postgres; if it's blank, it falls back to local SQLite.
+`settings.py` reads `DATABASE_URL` from `.env`. When running automated tests (`python manage.py test`), Django automatically isolates runs by using in-memory SQLite so test executions never hit or wipe your production Supabase database.
 
-## 6. Create & apply migrations
+## 6. Apply database migrations
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
-This creates all Django tables (`auth_user`, `dashboard_evacuationcenter`,
-`profiles_profile`, `user_settings_usersettings`, etc.) in your Supabase Postgres
-database, and seeds 5 sample evacuation centers via a data migration.
+This applies all migrations and provisions tables in Supabase:
+- `auth_user` (Django authentication)
+- `home_evacuationcenter` (Evacuation centers, locations, and capacities)
+- `home_auditlog` (Complete audit trail of center and status updates)
+- `home_incident` (Active disaster incidents and alert levels)
+- `home_resourceinventory` (Relief supplies: food, water, medical kits, blankets)
+- `profile_profile` (User profiles, avatars, responder contact info, and roles)
+- `user_settings_usersettings` (Notifications, language, and theme preferences)
 
 ## 7. Create an admin user
 ```bash
 python manage.py createsuperuser
 ```
 
-## 8. Verify data in Supabase
-Supabase Dashboard → **Table Editor** → select your project's tables (e.g.
-`dashboard_evacuationcenter`, `auth_user`, `profiles_profile`,
-`user_settings_usersettings`) and confirm rows are present. Registering a user
-through `/register/` and editing their Profile/Settings should show up here live.
+## 8. Verify tables in Supabase Table Editor
+1. In the Supabase Dashboard, navigate to **Table Editor**.
+2. Confirm the core tables are present: `home_evacuationcenter`, `auth_user`, `profile_profile`, `user_settings_usersettings`, `home_auditlog`, `home_incident`, `home_resourceinventory`.
+3. Newly registered users and center status changes will be persisted directly to Supabase.
 
-## 9. Run the app
+## 9. Run the application
 ```bash
+# Local development server
 python manage.py runserver
+
+# Or production WSGI server
+gunicorn config.wsgi:application
 ```
-Visit http://127.0.0.1:8000/register/ to create an account, then explore
-Home, Profile, and Settings.
+Visit http://127.0.0.1:8000/ to access EvacuSafe.

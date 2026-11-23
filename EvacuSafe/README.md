@@ -1,87 +1,78 @@
 # EvacuSafe
 
-Disaster-Adaptive Evacuation Center Management & Real-Time Resource Tracking System.
-Django project using vertical slicing, backed by Supabase PostgreSQL.
+**Disaster-Adaptive Evacuation Center Management & Real-Time Resource Tracking System.**
+Production-ready Django vertical-sliced architecture backed by Supabase PostgreSQL, role-based authorization, live polling synchronization, audit logging, and incident/resource management.
 
-## Project structure
+## System Architecture
 
-```
+```text
 proj/
 ├── manage.py
-├── .env
-├── requirements.txt
-├── apps/                     # every vertical slice lives here
-│   ├── login/
-│   │   ├── migrations/
-│   │   ├── admin.py
-│   │   ├── apps.py
-│   │   ├── forms.py
-│   │   ├── models.py
-│   │   ├── urls.py
-│   │   └── views.py
-│   ├── register/
-│   │   └── ... (same shape)
-│   ├── home/
-│   │   └── ... (Live Dashboard — EvacuationCenter model)
-│   ├── profile/
-│   │   └── ... (avatar, role, phone, bio)
-│   └── user_settings/
-│       └── ... (notifications, dark mode, language, password change)
-├── static/
-│   ├── css/
-│   │   ├── base.css          # shared design tokens + layout chrome
-│   │   ├── login/login.css
-│   │   ├── register/register.css
-│   │   ├── home/home.css
-│   │   ├── profile/profile.css
-│   │   └── user_settings/settings.css
-│   ├── js/
-│   │   ├── login/login.js
-│   │   ├── register/register.js
-│   │   ├── home/home.js
-│   │   ├── profile/profile.js
-│   │   └── user_settings/settings.js
-│   └── images/
-│       ├── login/logo.svg
-│       ├── register/logo.svg
-│       ├── home/marker.svg
-│       ├── profile/default-avatar.svg
-│       └── user_settings/gear.svg
-├── templates/
-│   ├── base.html              # shared sidebar / shell / flash messages
-│   ├── login/login.html
-│   ├── register/register.html
-│   ├── home/home.html
-│   ├── profile/profile.html
-│   └── user_settings/settings.html
-└── config/                    # project settings (was evacu_project/)
-    ├── settings.py
-    ├── urls.py
-    ├── asgi.py
-    └── wsgi.py
+├── .env.example              # Documented environment template
+├── requirements.txt          # Production dependencies (Django, psycopg2, whitenoise, gunicorn)
+├── Procfile                  # Production process runner for Render/Heroku
+├── apps/                     # Vertical slice architecture
+│   ├── home/                 # Live Dashboard, Evacuation Centers, Audit Logs, Incidents, Resources
+│   ├── login/                # Authentication slice (login, logout, session security)
+│   ├── register/             # User registration slice
+│   ├── profile/              # Responder profile, avatar upload, role management, account admin
+│   └── user_settings/        # Notification preferences, language localization, password reset/change
+├── static/                   # Static assets (CSS, JS, SVG icons)
+├── templates/                # Centralized templates organized by app slice
+│   ├── base.html             # Common app shell, navigation, responsive sidebar, flash alerts
+│   ├── home/home.html        # Live operational map, real-time sync, center list & inventory
+│   ├── login/                # Login and password recovery views
+│   ├── profile/profile.html  # Profile management & account administration
+│   └── user_settings/        # User settings & security controls
+└── config/                   # Core Django project configuration
+    ├── settings.py           # Production-hardened settings with Supabase & test isolation
+    ├── urls.py               # Root URL configuration
+    ├── wsgi.py               # WSGI entrypoint for Gunicorn
+    └── asgi.py               # ASGI entrypoint
 ```
 
-Each app in `apps/` is registered in `INSTALLED_APPS` as `apps.<name>` (e.g. `apps.login`),
-with an explicit `label` set in its `AppConfig` so the app label stays short (`login`,
-`register`, `home`, `profile`, `user_settings`) for migrations, templates, and the ORM.
+## Setup & Local Development
 
-## Setup
+1. **Clone repository and install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-```bash
-pip install -r requirements.txt
-cp .env.example .env   # fill in your Supabase DATABASE_URL
-python manage.py check
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
+2. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Provide your Supabase connection URI in `DATABASE_URL` (or leave blank / set `USE_SQLITE=True` for offline local development).
 
-See `SUPABASE_SETUP.md` for connecting to a Supabase PostgreSQL database.
+3. **Verify and apply migrations:**
+   ```bash
+   python manage.py check
+   python manage.py makemigrations
+   python manage.py migrate
+   ```
 
-## Appearance
+4. **Create administrator account:**
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-Dark mode is the default for new and existing accounts. The per-user preference is stored
-on `UserSettings.dark_mode` (`apps/user_settings`). Users can opt into light mode from
-Settings; `templates/base.html` applies the saved theme consistently across authentication,
-Home, Profile, and Settings pages.
+5. **Run test suite:**
+   ```bash
+   python manage.py test
+   ```
+   *Note: Automated tests run against an isolated in-memory SQLite database and never modify your production Supabase database.*
+
+6. **Start development server:**
+   ```bash
+   python manage.py runserver
+   ```
+   Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
+
+## Security & Production Features
+
+- **Strict Role-Based Access Control (RBAC):** Distinct permissions for `Viewer/Responder`, `Coordinator`, and `Admin` users.
+- **Audit Trails & Soft Deletion:** Full change history tracking old vs. new capacity/occupancy and status with archivable center lifecycle.
+- **Capacity Safeguards:** Model- and form-level validations preventing negative or overflow occupancy with automatic 100% capacity flagging.
+- **Live Background Sync:** Real-time polling endpoint (`/api/centers/live/`) dynamically synchronizing status counters and map markers without full page reloads.
+- **Incident & Resource Tracking:** Active disaster disaster logging with severity ratings and center relief supply monitoring.
+- **WhiteNoise Asset Serving:** Direct, optimized static file delivery configured for containerized and cloud deployments.
