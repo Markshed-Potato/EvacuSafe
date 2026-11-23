@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}EvacuSafe - Dashboard{% endblock %}
+{% block title %}EvacuSafe - Live Operations Dashboard{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -9,18 +9,60 @@
 {% block content %}
 <div class="page-header">
     <div class="page-heading-copy">
-        <h1>Live operations</h1>
-        <p>Evacuation center availability and capacity overview</p>
+        <div class="role-indicator-badge">
+            <span class="user-role-chip {{ user_role|lower }}">{{ user_role }}</span>
+            <h1>Live operations</h1>
+        </div>
+        <p>Real-time disaster evacuation coordination, capacity tracking & relief logistics</p>
     </div>
     <div class="header-actions">
-        <span class="status-badge" id="system-status-badge">● SYSTEM ACTIVE</span>
-        <button type="button" class="btn add-center-btn" id="open-create-center">Add center <span aria-hidden="true">+</span></button>
+        <span class="status-badge" id="system-status-badge">
+            <span class="live-dot pulse"></span>
+            <span id="live-sync-text">LIVE SYNC ACTIVE</span>
+        </span>
+        {% if is_coordinator %}
+        <button type="button" class="btn secondary-btn" id="open-incident-dialog">Declare incident ⚠</button>
+        {% endif %}
+        <button type="button" class="btn add-center-btn" id="open-create-center"{% if not is_coordinator %} disabled hidden style="display:none;"{% endif %}>Add center <span aria-hidden="true">+</span></button>
+        {% if not is_coordinator %}
+        <span class="read-only-notice" title="Your account role is Viewer/Responder. Request Coordinator access to edit centers.">👁 Read-Only Mode</span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Active Incidents Alert Banner -->
+<div class="incidents-banner" id="incidents-banner"{% if not active_incidents %} hidden{% endif %}>
+    <div class="incidents-header">
+        <h3>Active Disaster Incidents ({{ active_incidents|length }})</h3>
+        {% if is_coordinator %}
+        <button type="button" class="btn-link" id="add-incident-quick-btn">+ New incident</button>
+        {% endif %}
+    </div>
+    <div class="incidents-grid" id="incidents-grid">
+        {% for inc in active_incidents %}
+        <div class="incident-card severity-{{ inc.severity }}" data-incident-id="{{ inc.id }}">
+            <div class="incident-top">
+                <span class="severity-badge {{ inc.severity }}">{{ inc.get_severity_display }}</span>
+                <span class="incident-type">{{ inc.get_disaster_type_display }}</span>
+                <span class="incident-time">{{ inc.declared_at|date:"M d, H:i" }}</span>
+            </div>
+            <h4 class="incident-title">{{ inc.title }}</h4>
+            <p class="incident-loc">📍 {{ inc.location|default:"General response sector" }}</p>
+            {% if inc.description %}<p class="incident-desc">{{ inc.description }}</p>{% endif %}
+            {% if is_coordinator %}
+            <button type="button" class="btn-resolve-incident" data-incident-id="{{ inc.id }}">Mark Resolved</button>
+            {% endif %}
+        </div>
+        {% endfor %}
     </div>
 </div>
 
 <div class="dashboard-body">
     <div class="map-card">
-        <h3>Live Evacuation Center Map</h3>
+        <div class="map-card-head">
+            <h3>Live Evacuation Center Map</h3>
+            <span class="sync-timestamp" id="map-last-sync">Updated just now</span>
+        </div>
         <div class="map-filter-bar">
             <span>Filter map and center list</span>
             <div class="filter-pills map-filter-pills" role="group" aria-label="Filter map and center list by status">
@@ -34,6 +76,7 @@
              data-unmapped-count="{{ unmapped_center_count }}"
              data-approximate-count="{{ approximate_center_count }}" role="application"
              data-centers-url="{% url 'manage_center' %}"
+             data-live-url="{% url 'live_centers_api' %}"
              data-tile-url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}"
              data-tile-attribution="Sources: Esri, HERE, Garmin, USGS, Intermap, INCREMENT P, NRCan, Esri Japan, METI, Esri China (Hong Kong), Esri Korea, Esri (Thailand), NGCC, &copy; OpenStreetMap contributors, and the GIS User Community"
              aria-label="Interactive map of evacuation centers"></div>
@@ -42,6 +85,7 @@
             <span><i class="legend-dot active"></i> Active</span>
             <span><i class="legend-dot standby"></i> Standby</span>
             <span><i class="legend-dot closed"></i> Closed</span>
+            <span><i class="legend-dot full"></i> Full (100%)</span>
         </div>
     </div>
 
@@ -64,7 +108,7 @@
         <div class="centers-table-heading">
             <div>
                 <h3>Evacuation centers</h3>
-                <p>Find centers by name or location and filter by availability.</p>
+                <p>Find centers by name or location and filter by operational availability.</p>
             </div>
             <label class="center-search">
                 <span class="visually-hidden">Search by center name or location</span>
@@ -81,12 +125,27 @@
         <div class="table-scroll">
             <table class="centers-table">
                 <thead>
-                    <tr><th>Name</th><th>Location</th><th>Status</th><th>Occupants</th><th>Capacity</th><th>Update</th></tr>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Occupants</th>
+                        <th>Capacity</th>
+                        <th>Relief Supplies</th>
+                        <th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody id="centers-table-body">
                 {% for c in centers %}
                 <tr data-center-id="{{ c.pk }}" data-status="{{ c.status }}" data-name="{{ c.name|lower }}" data-location="{{ c.location|lower }}">
-                    <td>{{ c.name }}</td>
+                    <td>
+                        <strong>{{ c.name }}</strong>
+                        {% if c.is_full %}
+                        <span class="capacity-warning full">FULL</span>
+                        {% elif c.is_near_capacity %}
+                        <span class="capacity-warning near">85%+</span>
+                        {% endif %}
+                    </td>
                     <td>
                         {{ c.location|default:"—" }}
                         {% if c.coordinates_are_approximate %}
@@ -94,20 +153,39 @@
                         {% endif %}
                     </td>
                     <td>
-                        <select class="inline-control" name="status" form="update-center-{{ c.pk }}" aria-label="Status for {{ c.name }}">
+                        <select class="inline-control" name="status" form="update-center-{{ c.pk }}" aria-label="Status for {{ c.name }}"{% if not is_coordinator %} disabled{% endif %}>
                             {% for value, label in status_choices %}
                             <option value="{{ value }}"{% if c.status == value %} selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                     </td>
-                    <td><input class="inline-control occupant-control" type="number" name="occupants" min="0" step="1" value="{{ c.occupants }}" form="update-center-{{ c.pk }}" aria-label="Occupants at {{ c.name }}"></td>
+                    <td>
+                        <input class="inline-control occupant-control" type="number" name="occupants" min="0" max="{{ c.capacity }}" step="1" value="{{ c.occupants }}" form="update-center-{{ c.pk }}" aria-label="Occupants at {{ c.name }}"{% if not is_coordinator %} disabled{% endif %}>
+                    </td>
                     <td>{{ c.capacity }}</td>
                     <td>
-                        <form id="update-center-{{ c.pk }}" class="inline-update-form" method="post" action="{% url 'update_center' c.pk %}">
-                            {% csrf_token %}
-                            <button class="btn inline-save-btn" type="submit">Save</button>
-                            <span class="inline-feedback" role="status" hidden></span>
-                        </form>
+                        <button type="button" class="btn-resource-view" data-center-id="{{ c.pk }}" data-center-name="{{ c.name }}"
+                                data-food="{{ c.resources.food_packs }}" data-water="{{ c.resources.water_liters }}"
+                                data-meds="{{ c.resources.medical_kits }}" data-blankets="{{ c.resources.blankets }}">
+                            📦 Food: {{ c.resources.food_packs|default:0 }} | Water: {{ c.resources.water_liters|default:0 }}L
+                        </button>
+                    </td>
+                    <td>
+                        <div class="row-actions">
+                            <form id="update-center-{{ c.pk }}" class="inline-update-form" method="post" action="{% url 'update_center' c.pk %}">
+                                {% csrf_token %}
+                                <button class="btn inline-save-btn" type="submit"{% if not is_coordinator %} disabled hidden style="display:none;"{% endif %}>Save</button>
+                                <span class="inline-feedback" role="status" hidden></span>
+                            </form>
+                            {% if is_coordinator %}
+                            <button type="button" class="btn-row-action archive" data-action="archive" data-center-id="{{ c.pk }}" data-center-name="{{ c.name }}" title="Archive this center">Archive</button>
+                            {% if is_admin %}
+                            <button type="button" class="btn-row-action delete" data-action="delete" data-center-id="{{ c.pk }}" data-center-name="{{ c.name }}" title="Permanently delete center">Delete</button>
+                            {% endif %}
+                            {% else %}
+                            <span class="read-only-pill">Read only</span>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -116,7 +194,32 @@
         </div>
         <p class="empty-state" id="center-empty-state" hidden>No centers match these filters. Try another search or status.</p>
     </div>
+
+    <!-- Audit Log Feed Card -->
+    <div class="audit-feed-card">
+        <div class="audit-card-head">
+            <h3>Recent Audit Trail & Response Activity</h3>
+            <span class="audit-counter">{{ recent_logs|length }} entries</span>
+        </div>
+        <div class="audit-log-list" id="audit-log-list">
+            {% for log in recent_logs %}
+            <div class="audit-item action-{{ log.action }}">
+                <div class="audit-item-header">
+                    <span class="audit-action-chip {{ log.action }}">{{ log.get_action_display }}</span>
+                    <strong class="audit-center">{{ log.center_name }}</strong>
+                    <span class="audit-time">{{ log.timestamp|date:"H:i:s" }}</span>
+                </div>
+                <p class="audit-detail">{{ log.details|default:"Status or occupancy recorded." }}</p>
+                <div class="audit-user">Operated by: {{ log.user.username|default:"System" }}</div>
+            </div>
+            {% empty %}
+            <p class="empty-audit">No audit activity logged yet.</p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
+
+<!-- Modal: Create Center Dialog -->
 <dialog class="center-dialog" id="center-dialog" aria-labelledby="center-dialog-title">
     <form id="center-form" method="post" action="{% url 'manage_center' %}" novalidate>
         {% csrf_token %}
@@ -127,7 +230,7 @@
             </div>
             <button type="button" class="dialog-close" id="close-center-dialog" aria-label="Close dialog">×</button>
         </div>
-        <p class="dialog-description">Add a center and its current capacity information.</p>
+        <p class="dialog-description">Add a center and its initial capacity information.</p>
         <div class="dialog-form-grid">
             <div class="dialog-field full">
                 <label for="center-name">Center name</label>
@@ -169,6 +272,118 @@
         </div>
     </form>
 </dialog>
+
+<!-- Modal: Declare Incident Dialog -->
+<dialog class="center-dialog" id="incident-dialog" aria-labelledby="incident-dialog-title">
+    <form id="incident-form" method="post" action="{% url 'declare_incident' %}" novalidate>
+        {% csrf_token %}
+        <div class="dialog-heading">
+            <div>
+                <p class="dialog-kicker">Emergency Dispatch</p>
+                <h2 id="incident-dialog-title">Declare Disaster Incident</h2>
+            </div>
+            <button type="button" class="dialog-close" id="close-incident-dialog" aria-label="Close dialog">×</button>
+        </div>
+        <p class="dialog-description">Broadcast a major event to alert responders and trigger emergency email alerts.</p>
+        <div class="dialog-form-grid">
+            <div class="dialog-field full">
+                <label for="incident-title">Incident Title</label>
+                <input id="incident-title" name="title" placeholder="e.g. Typhoon Betty Flash Flood Sector 4" required maxlength="150">
+            </div>
+            <div class="dialog-field">
+                <label for="incident-type">Disaster Type</label>
+                <select id="incident-type" name="disaster_type">
+                    <option value="Typhoon">Typhoon / Cyclone</option>
+                    <option value="Flood">Flash Flood / Inundation</option>
+                    <option value="Earthquake">Earthquake</option>
+                    <option value="Fire">Fire</option>
+                    <option value="Landslide">Landslide</option>
+                    <option value="Volcanic">Volcanic Activity</option>
+                    <option value="Other">Other Emergency</option>
+                </select>
+            </div>
+            <div class="dialog-field">
+                <label for="incident-severity">Severity Level</label>
+                <select id="incident-severity" name="severity">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High (Triggers Email Alert)</option>
+                    <option value="critical">Critical (Emergency Broadcast)</option>
+                </select>
+            </div>
+            <div class="dialog-field full">
+                <label for="incident-location">Location / Sector</label>
+                <input id="incident-location" name="location" placeholder="e.g. Barangay San Isidro & Mabolo" maxlength="200">
+            </div>
+            <div class="dialog-field full">
+                <label for="incident-desc">Operational Situation Notes</label>
+                <textarea id="incident-desc" name="description" rows="3" placeholder="Current situation, evacuee influx, road blockages..."></textarea>
+            </div>
+        </div>
+        <p class="dialog-feedback" id="incident-form-feedback" role="alert" hidden></p>
+        <div class="dialog-actions">
+            <button type="button" class="btn secondary-btn" id="cancel-incident-dialog">Cancel</button>
+            <button type="submit" class="btn btn-emergency" id="save-incident-button">Broadcast Incident</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal: Resource Inventory Dialog -->
+<dialog class="center-dialog" id="resource-dialog" aria-labelledby="resource-dialog-title">
+    <form id="resource-form" method="post" action="" novalidate>
+        {% csrf_token %}
+        <div class="dialog-heading">
+            <div>
+                <p class="dialog-kicker">Logistics & Relief Supplies</p>
+                <h2 id="resource-dialog-title">Center Resource Inventory</h2>
+            </div>
+            <button type="button" class="dialog-close" id="close-resource-dialog" aria-label="Close dialog">×</button>
+        </div>
+        <p class="dialog-description" id="resource-dialog-subtitle">Supplies stored at facility.</p>
+        <div class="dialog-form-grid">
+            <div class="dialog-field">
+                <label for="res-food">Food Packs</label>
+                <input id="res-food" type="number" name="food_packs" min="0" step="1" value="0">
+            </div>
+            <div class="dialog-field">
+                <label for="res-water">Water (Liters)</label>
+                <input id="res-water" type="number" name="water_liters" min="0" step="1" value="0">
+            </div>
+            <div class="dialog-field">
+                <label for="res-meds">Medical First-Aid Kits</label>
+                <input id="res-meds" type="number" name="medical_kits" min="0" step="1" value="0">
+            </div>
+            <div class="dialog-field">
+                <label for="res-blankets">Blankets / Cots</label>
+                <input id="res-blankets" type="number" name="blankets" min="0" step="1" value="0">
+            </div>
+        </div>
+        <p class="dialog-feedback" id="resource-form-feedback" role="alert" hidden></p>
+        <div class="dialog-actions">
+            <button type="button" class="btn secondary-btn" id="cancel-resource-dialog">Close</button>
+            {% if is_coordinator %}
+            <button type="submit" class="btn" id="save-resource-button">Update Supplies</button>
+            {% endif %}
+        </div>
+    </form>
+</dialog>
+
+<!-- Modal: Permanent Deletion Confirmation Dialog (Admin only) -->
+<dialog class="center-dialog confirm-dialog" id="delete-confirm-dialog" aria-labelledby="delete-dialog-title">
+    <div class="dialog-inner">
+        <h3 id="delete-dialog-title">Confirm Permanent Center Deletion</h3>
+        <p class="danger-warning">⚠ Warning: This action is permanent and cannot be undone. All associated records and supply inventories will be deleted. An immutable entry will be recorded in the audit log.</p>
+        <p id="delete-center-name-text">Are you sure you want to delete this evacuation center?</p>
+        <div class="dialog-actions">
+            <button type="button" class="btn secondary-btn" id="cancel-delete-btn">Cancel</button>
+            <button type="button" class="btn btn-danger-action" id="confirm-delete-btn">Permanently Delete</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- CSRF Token Carrier for Fetch Requests -->
+<input type="hidden" id="dashboard-csrf" value="{{ csrf_token }}">
+
 {{ centers_data|json_script:"evacuation-centers-data" }}
 {% endblock %}
 {% block extra_js %}
